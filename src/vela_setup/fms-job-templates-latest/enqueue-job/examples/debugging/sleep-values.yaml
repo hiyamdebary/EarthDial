@@ -1,0 +1,45 @@
+# jobName: sleep-test-0
+# namespace: dev
+priority: "default-priority"
+useOldMcadCrd: false
+
+numPods: 2
+totalMemoryPerPod: 64Gi #1Ti # hack for claiming a whole node
+numCpusPerPod: 1
+numGpusPerPod: 0
+
+# Any container image supporting the setupCommands will do
+containerImage: bash 
+# imagePullSecrets:
+#   - all-icr-io
+
+setupCommands:
+  - echo "starting"
+  - sleep 600 # Not generally recommended! The requested resources will be unavailable to other workloads.
+
+#multiNicNetworkName: multi-nic-network #Not needed for sleep tests
+
+# Not actually needed for sleep tests
+environmentVariables:
+  - name: NCCL_MIN_NCHANNELS
+    value: "2"
+  - name: NCCL_CROSS_NIC
+    value: "0"
+  - name: CUDA_VISIBLE_DEVICES
+    value: 0,1,2,3,4,5,6,7
+  - name: NCCL_TREE_THRESHOLD
+    value: "0"
+  - name: NCCL_ALGO
+    value: Ring
+  - name: NCCL_IGNORE_CPU_AFFINITY
+    value: "1"
+  - name: NCCL_DEBUG_SUBSYS
+    value: INIT,GRAPH,ENV,TUNING
+  - name: NCCL_SOCKET_NTHREADS
+    value: "2"
+  - name: NCCL_IB_DISABLE
+    value: "1"
+  - name: NCCL_NSOCKS_PERTHREAD
+    value: "4"
+  - name: NCCL_DEBUG
+    value: WARN

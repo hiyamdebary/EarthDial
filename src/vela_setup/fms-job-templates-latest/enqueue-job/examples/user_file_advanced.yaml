@@ -1,0 +1,87 @@
+# Job name and namespace
+namespace: default
+jobName: my-pytorch-job
+priority: "default-priority"
+
+# Container image to be used
+containerImage: ghcr.io/foundation-model-stack/base:pytorch-latest-nightly-20230104
+
+# Runtime hardward specificiation
+numPods: 4
+numCpusPerPod: 1
+numGpusPerPod: 0
+totalMemoryPerPod: 1Gi
+
+limitCpusPerPod: 5
+limitGpusPerPod: 2
+limitMemoryPerPod: 2Gi
+
+# Environment
+environmentVariables:
+    - name: SHARDING_STRATEGY
+      value: full
+    - name: BACKWARD_PREFETCH
+      value: pre
+    - name: MODEL_NAME
+      value: 11b
+    - name: BATCH_SIZE
+      value: "50"
+    - name: CPU_OFFLOAD
+      value: "false"
+    - name: HF_DATASETS_CACHE
+      value: /workspace/data/.cache/huggingface/datasets
+    - name: TRANSFORMERS_CACHE
+      value: /workspace/data/.cache/huggingface/transformers
+    - name: GIT_PAT
+      secret:
+          name: davis-git-access
+          key: accesstoken
+
+# Commands
+setupCommands:
+    - git clone https://github.com/lessw2020/t5_11.git
+    - cd t5_11/fsdp
+    - cp * /opt/conda/lib/python3.9/site-packages/torch/distributed/fsdp/
+    - cd ../_comm_hooks
+    - cp * /opt/conda/lib/python3.9/site-packages/torch/distributed/algorithms/_comm_hooks
+    - cd ../..
+    - git clone https://github.com/lchu-ibm/workshops.git
+    - cd workshops/FSDP_Workshop"
+
+mainProgram: main-training.py
+
+# Multinic support
+multiNicNetworkName: my-nic-network
+
+# Image Pull Secrets
+imagePullSecrets:
+    - name: my-registry-a
+    - name: my-registry-b
+
+# Volumes
+volumes:
+    - name: my-volume-a
+      claimName: cos-pvc
+      mountPath: /workspace/data
+    - name: my-volume-b
+      claimName: nfs-pvc
+      mountPath: /workspace/scratch
+
+# Init containers
+initContainers:
+    - name: init-container-a
+      image: alpine:latest
+      command: ["sh", "-c", "echo Hello"]
+    - name: init-container-b
+      image: alpine:latest
+      command:
+          - sh
+          - -c
+          - echo "Hello"
+
+# Git private repo
+sshGitCloneConfig:
+    secretName: my-secret
+    configMapName: my-config-map
+    secretMountPath: "/my/secret/path"
+    configMapMountPath: "/my/config/path"

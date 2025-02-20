@@ -1,0 +1,134 @@
+{
+    "Bigearthnet_MS_120Patch": {
+        "annotation": "/cos/processed_downstream_dataset/Classification_Shards_corrected/BigEarthNet_FINAL_S2/BigEarthNet_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "tif_ms",
+        "dynamic_image": false,
+        "bands":12,
+        "conversation": "conversations",
+        "normalization":"s2_l2a"
+    },
+    "LCZs_S2_train_32Patch": {
+        "annotation": "/cos/processed_downstream_dataset/Classification_Shards_corrected/LCZs_S2/LCZs_S2_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "tif_ms",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":10,
+        "normalization":"s2_norm"
+    },
+    "TreeSatAI_train": { 
+        "annotation": "/cos/processed_downstream_dataset/Classification_Shards_corrected/TreeSatAI_Shards/TreeSatAI_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "rgbi",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":4,
+        "normalization":"tree_norm"
+    },
+    "ship_dataset_v0_grounding_train": {
+        "annotation": "/cos/processed_downstream_dataset/Detection_Shards/ship_dataset_v0/ship_dataset_v0_grounding_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "jpg",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":1,
+        "normalization":"s1"
+    },
+    "ship_dataset_v0_refer_train": {
+        "annotation": "/cos/processed_downstream_dataset/Detection_Shards/ship_dataset_v0/ship_dataset_v0_refer_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "jpg",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":1,
+        "normalization":"s1"
+    },
+    "ship_dataset_v0_region_captioning_train": {
+        "annotation": "/cos/processed_downstream_dataset/Detection_Shards/ship_dataset_v0/ship_dataset_v0_region_captioning_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "jpg",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":1,
+        "normalization":"s1"
+    },
+    "SRSDD_V1_0_grounding_train": {
+        "annotation": "/cos/processed_downstream_dataset/Detection_Shards/SRSDD_V1_0/SRSDD_V1_0_grounding_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "jpg",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":1,
+        "normalization":"s1"
+    },
+    "SRSDD_V1_0_refer_train": {
+        "annotation": "/cos/processed_downstream_dataset/Detection_Shards/SRSDD_V1_0/SRSDD_V1_0_refer_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "jpg",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":1,
+        "normalization":"s1"
+    },
+    "SRSDD_V1_0_region_captioning_train": {
+        "annotation": "/cos/processed_downstream_dataset/Detection_Shards/SRSDD_V1_0/SRSDD_V1_0_region_captioning_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "jpg",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":1,
+        "normalization":"s1"
+    },
+    "Satlas_S1": {
+        "annotation": "/cos/processed_dataset/sentinel1_final",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 436114,
+        "image_key": "png",
+        "conversation": "conversations_about_localization",
+        "dynamic_image": false,
+        "bands":1,
+        "normalization":"s1"
+    },
+    "STARCOP_train": { 
+        "annotation": "/cos/processed_downstream_dataset/STARCOP_shards/STARCOP_train/",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "tif_pl,mag1c",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":4,
+        "normalization":"rgbm_norm"
+
+    },
+    "UHI_train": { 
+        "annotation": "/cos/processed_downstream_dataset/UHI_shards/UHI_train/",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "tif_ms",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":8,
+        "normalization":"l8_norm"
+    },
+    "Change_SAR_Quakeset_train": { 
+        "annotation": "/cos/processed_downstream_dataset/Temporal/Quakeset_shards/Quakeset_train",
+        "data_augment": false,
+        "repeat_time": 1,
+        "image_key": "jpg_pre,jpg_post",
+        "conversation": "conversations",
+        "dynamic_image": false,
+        "bands":1,
+        "normalization":"s1"
+    }
+}

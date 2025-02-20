@@ -1,0 +1,19 @@
+# Job name and namespace
+namespace: mcad-testing
+jobName: my-pytorch-job
+
+# Container image to be used
+containerImage: ghcr.io/foundation-model-stack/base:pytorch-latest-nightly-20230104
+
+# Runtime hardward specificiation
+numPods: 3
+numCpusPerPod: 8
+numGpusPerPod: 8
+totalMemoryPerPod: 1Gi
+
+# Commands
+setupCommands:
+    - git clone https://github.com/dbarnett/python-helloworld
+    - cd python-helloworld
+
+mainProgram: helloworld.py

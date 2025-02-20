@@ -1,0 +1,145 @@
+namespace: geo-vlm
+jobName: earthdial-sagarsoni-n2c64g8m600
+priority: "default-priority"
+
+customLabels: # <optional>
+#    project-name: my-project
+#    oranization-name: my-organization
+
+imagePullSecrets:
+  - name: all-icr-io
+
+containerImage: icr.io/eofm/eofm-base-geovlm:1.0.0 
+hostIgnoreList:
+  - prod-6p9lg-gdr-gpu-worker-3-il-c4np6
+  - prod-6p9lg-gdr-gpu-worker-3-jwcsb
+  - prod-6p9lg-gdr-gpu-worker-3-khgnm
+  - prod-6p9lg-gdrv2-gpu-worker-3-qbgfc
+
+
+# 8 GPUs, 80 vCPUs, 1.2T RAM
+numPods: 2
+numCpusPerPod: 32
+numGpusPerPod: 8
+totalMemoryPerPod: 400Gi
+
+environmentVariables:
+  - name: NCCL_SOCKET_IFNAME
+    value: 'net1-0,net1-1'
+  - name: NCCL_MIN_NCHANNELS
+    value: '1'
+  - name: NCCL_CROSS_NIC
+    value: '0'
+  - name: CUDA_VISIBLE_DEVICES
+    value: '0,1,2,3,4,5,6,7'
+  - name: NCCL_TREE_THRESHOLD
+    value: '0'
+  - name: NCCL_ALGO
+    value: Tree
+  - name: NCCL_IGNORE_CPU_AFFINITY
+    value: '1'
+  - name: NCCL_DEBUG_SUBSYS
+    value: 'INIT,GRAPH,ENV,TUNING'
+  - name: NCCL_SOCKET_NTHREADS
+    value: '2'
+  - name: NCCL_IB_DISABLE
+    value: '1'
+  - name: NCCL_NSOCKS_PERTHREAD
+    value: '4'
+  # - name: NCCL_TIMEOUT
+  #   value: '100'
+  - name: NCCL_DEBUG
+    value: WARN
+  - name: HF_TOKEN
+    value: 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
+  - name: HUGGINGFACE_HUB_CACHE
+    value: /cos/Model_Files/Model_Weights/cache
+  - name: HF_HOME
+    value: /cos/Model_Files/Model_Weights/cache
+  - name: HF_DATASETS_CACHE
+    value: /cos/Model_Files/Model_Weights/cache
+  - name: CUDA_LAUNCH_BLOCKING
+    value: "1"
+  - name: OMP_NUM_THREADS
+    value: "1"
+  - name: MKL_NUM_THREADS
+    value: "1"
+  - name: NUMEXPR_NUM_THREADS
+    value: "1"
+  - name: PYTHONPATH
+    value: "src/earthdial/train"
+  # - name: PYTHONUNBUFFERED
+  #   value: '1'
+  - name: GIT_KEY
+    secret:
+      name: eofm-mbzuai-sagar
+      key: git_key
+
+
+setupCommands:
+  - pip install datasets
+  - git clone  https://sagarsoni:${GIT_KEY}@github.ibm.com/sagarsoni/EarthDial.git
+  - cd src/earthdial
+  - mkdir /cos/Model_Files/Model_Weights/4B_Model/4B_Stage2_RGB_Temporal_26Nov
+
+#Actual model :  /cos/Model_Files/Model_Weights/pretrained_models/4B_model
+
+mainProgram: train/finetune.py
+    --model_name /cos/Model_Files/Model_Weights/4B_Model/4B_Full_6Nov_pretrain_VIT_MLP_LLM_1/ 
+    --conv_style "phi3-chat"
+    --output_dir /cos/Model_Files/Model_Weights/4B_Model/4B_Stage2_RGB_Temporal_26Nov
+    --meta_path shell/data/Stage2_RGB_Temporal_Finetunning.json
+    --overwrite_output_dir True
+    --force_image_size 448
+    --max_dynamic_patch 6
+    --down_sample_ratio 0.5
+    --drop_path_rate 0.1
+    --freeze_llm False
+    --freeze_mlp False
+    --freeze_backbone True
+    --vision_select_layer -1
+    --dataloader_num_workers 8
+    --bf16 True
+    --num_train_epochs 1
+    --per_device_train_batch_size 2
+    --gradient_accumulation_steps 64
+    --evaluation_strategy "no"
+    --save_strategy "epoch"
+    --save_total_limit 1
+    --learning_rate 4e-5
+    --weight_decay 0.05
+    --warmup_ratio 0.03
+    --lr_scheduler_type "cosine"
+    --logging_steps 100
+    --max_seq_length 4096
+    --do_train True
+    --grad_checkpoint True
+    --group_by_length True
+    --dynamic_image_size True
+    --use_thumbnail True
+    --ps_version 'v2'
+    --deepspeed shell/zero_stage1_config.json
+    --report_to "tensorboard"
+ 2>&1 | tee -a "/cos/Model_Files/Model_Weights/4B_Model/4B_Stage2_RGB_Temporal_26Nov/training_log.txt"
+
+volumes:
+  - name: cos
+    claimName: eo-fm-cloud-vela-mbzuai-train-pvc
+    #eo-fm-cloud-vela-mbzuai-pvc
+    mountPath: /cos
+
+roceGdrResName: # <optional, default="nvidia.com/roce_gdr"> RoCE GDR resource name (can vary by cluster configuration)
+numRoceGdr: 2 # <optional, default=0> set to 2 to leverage GDR on Vela with GDR over RoCE
+topologyFileConfigMap: topo-gdr-2vf-canary # <optional, default=""> Name of configmap containining /var/run/nvidia-topologyd/virtualTopology.xml for the system e.g. topo-gdr-2vf-canary #TODO make this required if numRoceGdr > 0 ?
+ncclGdrEnvConfigMap: nccl-netwk-env-vars  # <optional, default=""> Name of configmap containing NCCL networking environment variables for the system e.g. nccl-netwk-env-vars #TODO make this required if numRoceGdr > 0 ?
+multiNicNetworkName: multi-nic-network
+disableSharedMemory: false
+initContainers:
+restartPolicy: Never
+completionStatus: "Succeeded"
+disableRequeuing: false
+requeuing:
+bypassCoscheduler: false
+# useOldMcadCrd: false
+# useOldCoschedulerCrd: true
+serviceAccountName: gdr

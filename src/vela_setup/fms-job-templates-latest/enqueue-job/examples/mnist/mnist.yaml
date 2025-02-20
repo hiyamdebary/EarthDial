@@ -1,0 +1,61 @@
+# Job name and namespace
+#namespace: mcad-testing
+jobName: mnist-training
+priority: "default-priority"
+
+# Container image to be used
+containerImage: ghcr.io/foundation-model-stack/base:pytorch-latest-nightly-20230126
+
+# GDR support
+#
+numRoceGdr: # <optional, default=0> set to 2 to leverage GDR on Vela with GDR over RoCE
+topologyFileConfigMap: nccl-netwk-env-vars # <optional, default=""> Name of configmap containining /var/run/nvidia-topologyd/virtualTopology.xml for the system e.g. topo-gdr-2vf-canary #TODO make this required if numRoceGdr > 0 ?
+ncclGdrEnvConfigMap: topo-gdr-2vf-canary # <optional, default=""> Name of configmap containing NCCL networking environment variables for the system e.g. nccl-netwk-env-vars #TODO make this required if numRoceGdr > 0 ?
+
+# Runtime hardward specificiation
+numPods: 2
+numCpusPerPod: 1
+numGpusPerPod: 1
+totalMemoryPerPod: 1Gi
+
+# Environment
+environmentVariables:
+    - name: HF_DATASETS_CACHE
+      value: "/data/.cache/huggingface"
+
+# Commands
+setupCommands:
+    - git clone https://github.com/metalcycling/mnist-distributed-training
+    - cd mnist-distributed-training
+
+mainProgram: mnist.py
+
+# POD restart policy
+restartPolicy: Never
+
+# Volumes
+volumes:
+#    - name: scratch
+#      claimName: mcad-testing-pvc
+#      mountPath: "/data"
+
+# Disable requeuing to turn off POD checking. Disable requeuing is only intended
+# for debugging purposes. If requeuing is disabled, MCAD will only release the
+# resources acquired by the AppWrapper if it completes successfully or is
+# deleted. Resources will not be released if the PyTorchJob fails or is deleted
+# without deleting the AppWrapper.
+#
+disableRequeuing: false
+
+# Requeuing parameters (if requeuing is not disabled)
+#
+#   When requeuing is enabled, MCAD periodically checks the AppWrapper to
+#   confirm that the number of PODs specified in
+#   'spec.schedulingSpec.minAvailable' is the same as the number of running
+#   PODs.
+#
+requeuing:
+    maxNumRequeuings: 1 # Maximum number of requeuings permitted (infinite if zero)
+    timeInSeconds: 570 # Initial waiting time before checking pods after dispatch
+    pauseTimeInSeconds: 90 # Waiting time before trying to dispatch again after requeuing
+    forceDeletionTimeInSeconds: 570 # Enable forced deletion after delay if greater than zero

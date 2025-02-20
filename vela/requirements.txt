@@ -1,0 +1,33 @@
+accelerate<1
+bitsandbytes==0.42.0
+decord
+deepspeed>=0.13.5
+einops==0.6.1
+einops-exts==0.0.4
+evaluate  # Earthdial
+huggingface_hub
+imageio
+numpy==1.26.4
+opencv-python==4.8.0.74
+orjson
+peft==0.10.0
+protobuf  # Earthdial
+pycocoevalcap
+pyyaml
+scikit-learn>=1.2.2
+scipy
+sentencepiece==0.1.99
+shortuuid
+tensorboard
+tensorboardX
+termcolor
+timm==0.9.12
+tokenizers==0.15.1
+torch>=2
+torchvision>=0.15
+tqdm
+transformers==4.37.2
+yacs
+setuptools==69.5.1  # Earthdial
+mpi4py
+datasets  # Earthdial

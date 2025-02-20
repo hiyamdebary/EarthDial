@@ -1,0 +1,50 @@
+apiVersion: v1
+data:
+  virtualTopology.xml: |
+    <system version="1">
+      <cpu numaid="0" affinity="0000,00ffffff" arch="x86_64" vendor="GenuineIntel" familyid="6" modelid="85">
+        <pci busid="ffff:ff:00.0" class="0x060400" vendor="0x104c" device="0x8232" subsystem_vendor="0x0000" subsystem_device="0x0000" link_speed="2.5 GT/s" link_width="1">
+          <pci busid="0000:08:01.0" class="0x030200" vendor="0x10de" device="0x20b2" subsystem_vendor="0x10de" subsystem_device="0x1463" link_speed="16 GT/s" link_width="16">
+          </pci>
+          <pci busid="0000:08:02.0" class="0x030200" vendor="0x10de" device="0x20b2" subsystem_vendor="0x10de" subsystem_device="0x1463" link_speed="16 GT/s" link_width="16">
+          </pci>
+          <pci busid="0000:08:00.0" class="0x020000" vendor="0x15b3" device="0x101d" subsystem_vendor="0x15b3" subsystem_device="0x0041" link_speed="16 GT/s" link_width="16">
+              <nic>
+                  <net name="mlx5_4" port="1" gdr="1" speed="100000"/>
+              </nic>
+          </pci>
+        </pci>
+        <pci busid="ffff:fd:00.0" class="0x060400" vendor="0x104c" device="0x8232" subsystem_vendor="0x0000" subsystem_device="0x0000" link_speed="2.5 GT/s" link_width="1">
+          <pci busid="0000:0a:03.0" class="0x030200" vendor="0x10de" device="0x20b2" subsystem_vendor="0x10de" subsystem_device="0x1463" link_speed="16 GT/s" link_width="16">
+          </pci>
+          <pci busid="0000:0a:04.0" class="0x030200" vendor="0x10de" device="0x20b2" subsystem_vendor="0x10de" subsystem_device="0x1463" link_speed="16 GT/s" link_width="16">
+          </pci>
+        </pci>
+      </cpu>
+      <cpu numaid="1" affinity="ffff,ff000000" arch="x86_64" vendor="GenuineIntel" familyid="6" modelid="85">
+        <pci busid="ffff:fe:00.0" class="0x060400" vendor="0x104c" device="0x8232" subsystem_vendor="0x0000" subsystem_device="0x0000" link_speed="2.5 GT/s" link_width="1">
+          <pci busid="0000:0c:05.0" class="0x030200" vendor="0x10de" device="0x20b2" subsystem_vendor="0x10de" subsystem_device="0x1463" link_speed="16 GT/s" link_width="16">
+          </pci>
+          <pci busid="0000:0c:06.0" class="0x030200" vendor="0x10de" device="0x20b2" subsystem_vendor="0x10de" subsystem_device="0x1463" link_speed="16 GT/s" link_width="16">
+          </pci>
+          <pci busid="0000:0c:00.0" class="0x020000" vendor="0x15b3" device="0x101d" subsystem_vendor="0x15b3" subsystem_device="0x0041" link_speed="16 GT/s" link_width="16">
+              <nic>
+                  <net name="mlx5_3" port="1" gdr="1" speed="100000"/>
+              </nic>
+          </pci>
+        </pci>
+        <pci busid="ffff:fc:00.0" class="0x060400" vendor="0x104c" device="0x8232" subsystem_vendor="0x0000" subsystem_device="0x0000" link_speed="2.5 GT/s" link_width="1">
+          <pci busid="0000:0e:07.0" class="0x030200" vendor="0x10de" device="0x20b2" subsystem_vendor="0x10de" subsystem_device="0x1463" link_speed="16 GT/s" link_width="16">
+          </pci>
+          <pci busid="0000:0e:08.0" class="0x030200" vendor="0x10de" device="0x20b2" subsystem_vendor="0x10de" subsystem_device="0x1463" link_speed="16 GT/s" link_width="16">
+          </pci>
+        </pci>
+      </cpu>
+    </system>
+kind: ConfigMap
+metadata:
+  name: topo-gdr-2vf-canary
+  annotations:
+    reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "test" # empty list "" for all namespaces
+    reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"

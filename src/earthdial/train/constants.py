@@ -1,0 +1,67 @@
+IMG_CONTEXT_TOKEN = "<IMG_CONTEXT>"
+IMG_START_TOKEN = "<img>"
+IMG_END_TOKEN = "</img>"
+QUAD_START_TOKEN = "<quad>"
+QUAD_END_TOKEN = "</quad>"
+REF_START_TOKEN = "<ref>"
+REF_END_TOKEN = "</ref>"
+BOX_START_TOKEN = "<box>"
+BOX_END_TOKEN = "</box>"
+# other tokens
+# REF_START_TOKEN = "<p>"
+# REF_END_TOKEN = "</p>"
+# <ref> </ref>
+BOX_START_TOKEN = "<box>"
+BOX_END_TOKEN = "</box>"
+
+# special tokens
+S2_RGB_10_TOKEN = "[s2_rgb_10]"
+L8_RGB_30_TOKEN = "[l8_rgb_30]"
+HIGH_RGB_05_TOKEN = "[hr_rgb_0.5]"
+HIGH_RGB_05_TEMP_TOKEN = "[hr_rgb_temp_0.5]"
+HIGH_RGBI_05="[hr_rgbi_0.5]"
+# For SAR
+S1_VH_10_TOKEN = "[s1_vh_10]"
+S1_VH_1_TOKEN = "[s1_vh_1]"  # Satlas
+# For the SAR Ship we have [s1_vh_1]
+S1_VH_TEMP_10="[s1_vh_temp_10]"
+MB_TOKEN_START="<mb>"
+MB_TOKEN_END="</mb>"
+# NEW
+S2_MS_10_TOKEN="[s2_ms_10]"
+
+# task tokens
+GROUNDING = "[grounding]"
+REFER = "[refer]"
+IDENTIFY = "[identify]"
+CLASSIFY = "[classify]"
+CHANGEDET = "[changedet]"
+# New
+CAPTION="[caption]"
+TREECLASSIFY = "[treeclassify]" # for the input data:[hr_rgbi_0.5] treeclassify[]
+
+#UHI
+UHI="[uhi]"
+L8_MS_30="[l8_ms_30]"
+
+HYPER_RGB_3="[hyper_rgb_3]"
+IMAGENET_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_STD = (0.229, 0.224, 0.225)
+CLIP_MEAN = (0.4814546, 0.4578275, 0.40821073)
+CLIP_STD = (0.2686295, 0.2613025, 0.2757711)
+SIGLIP_MEAN = (0.5, 0.5, 0.5)
+SIGLIP_STD = (0.5, 0.5, 0.5)
+
+# For S2 data -- SSL4EO
+S2_MEAN = (756.4, 889.6, 1151.7, 1307.6, 1637.6, 2212.6, 2442.0, 2538.9, 2602.9, 2666.8, 2388.8, 1821.5)
+S2_STD = (1111.4, 1159.1, 1188.1, 1375.2, 1376.6, 1358.6, 1418.4, 1476.4, 1439.9, 1582.1, 1460.7, 1352.2)
+
+# For S1 data
+S1_MEAN=(-20.26)
+S1_STD=(5.91)
+
+rgbi_mean=0
+rgbi_std=255
+
+L8_MEAN=(1685.9217528110576, 2576.6100969824315, 3412.410682967383,4061.91785557694, 4908.372486703946, 4252.256712562256,4252.256712562256,4252.256712562256)
+L8_STD=(359.7262632109024, 418.76947482788194, 568.2571089787482,626.040956183579, 978.8922439362542, 866.6750990367983,866.6750990367983,866.6750990367983)

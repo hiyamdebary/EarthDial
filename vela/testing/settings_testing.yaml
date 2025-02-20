@@ -1,0 +1,83 @@
+namespace: geo-vlm    # namespace to deploy to (required)
+jobName: test1-sagar-n1c16g8m600          # name of the generated AppWrapper and PyTorchJob objects (required)
+queueName: default-queue      # local queue to submit to (default: default-queue)
+
+numPods: 1                    # total pod count including master and worker pods (default: 1)
+numCpusPerPod: 16           # requested number of cpus per pod (default: 1)
+numGpusPerPod: 8            # requested number of gpus per pod (default: 0)
+totalMemoryPerPod: 400Gi        # requested amount of memory per pod (default: 1Gi)
+
+priority: default-priority    # default-priority (default), low-priority, or high-priority
+
+# container image for the pods (required)
+containerImage: us.icr.io/cil15-shared-registry/eofm/eofm-base-geovlm-granite
+#icr.io/eofm/eofm-base-geovlm:1.0.0 
+
+volumes:
+  - name: pvc-volume
+    claimName: eo-fm-cloud-vela-mbzuai-train-pvc
+    mountPath: /cos
+
+environmentVariables:
+  - name: HF_HOME
+    value: "/app/cache"
+  - name: TRITON_CACHE_DIR
+    value: "/app/cache"
+  - name: TRITON_DUMP_DIR
+    value: "/app/cache"
+  - name: TRITON_OVERRIDE_DIR
+    value: "/app/cache"
+  - name: CUDA_LAUNCH_BLOCKING
+    value: "1"
+  - name: TORCH_EXTENSIONS_DIR
+    value: "/app/cache"
+
+# setup commands to run in each pod (optional)
+setupCommands:
+- git clone  https://sagarsoni:${GIT_KEY}@github.ibm.com/sagarsoni/EarthDial.git
+#- git clone -b package_name_difference https://sagarsoni:${GIT_PAT}@github.ibm.com/sagarsoni/EarthDial.git
+- mkdir -p /cos/Model_Files/Model_Weights/4B_Model/4B_Stage2_RGB_Temporal_5Feb
+- cd EarthDial/src
+
+# main program to invoke via torchrun (optional)
+mainProgram: torchrun --nnodes=${WORLD_SIZE} \
+         --node_rank=${RANK} \
+         --nproc_per_node=8 \
+         --rdzv_id=101 \
+         --rdzv_endpoint="${MASTER_ADDR}:${MASTER_PORT}" \
+         earthdial/train/finetune.py \
+         --model_name /cos/Model_Files/Model_Weights/4B_Model/4B_Full_6Nov_pretrain_VIT_MLP_LLM_1/ \
+         --conv_style "phi3-chat" \
+         --output_dir /cos/Model_Files/Model_Weights/4B_Model/4B_Stage2_RGB_Temporal_5Feb \
+         --meta_path shell/data/Stage2_RGB_Temporal_Finetunning.json \
+         --overwrite_output_dir True \
+         --force_image_size 448 \
+         --max_dynamic_patch 6 \
+         --down_sample_ratio 0.5 \
+         --drop_path_rate 0.1 \
+         --freeze_llm False \
+         --freeze_mlp False \
+         --freeze_backbone True \
+         --vision_select_layer -1 \
+         --dataloader_num_workers 8 \
+         --bf16 True \
+         --num_train_epochs 1 \
+         --per_device_train_batch_size 2 \
+         --gradient_accumulation_steps 64 \
+         --evaluation_strategy "no" \
+         --save_strategy "epoch" \
+         --save_total_limit 1 \
+         --learning_rate 4e-5 \
+         --weight_decay 0.05 \
+         --warmup_ratio 0.03 \
+         --lr_scheduler_type "cosine" \
+         --logging_steps 100 \
+         --max_seq_length 4096 \
+         --do_train True \
+         --grad_checkpoint True \
+         --group_by_length True \
+         --dynamic_image_size True \
+         --use_thumbnail True \
+         --ps_version 'v2' \
+         --deepspeed shell/zero_stage1_config.json \
+         --report_to "tensorboard"

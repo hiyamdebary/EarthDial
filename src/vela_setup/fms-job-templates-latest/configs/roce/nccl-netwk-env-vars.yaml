@@ -1,0 +1,19 @@
+apiVersion: v1
+data:
+  NCCL_IB_HCA: mlx5_3,mlx5_4
+  NCCL_IB_QPS_PER_CONNECTION: "8"
+  NCCL_IB_PCI_RELAXED_ORDERING: "1"
+  NCCL_IB_GID_INDEX: "3"
+  NCCL_SOCKET_IFNAME: net1-0,net1-1
+  NCCL_CROSS_NIC: "0"
+  NCCL_IGNORE_CPU_AFFINITY: "1"
+  NCCL_IB_DISABLE: "0"
+  NCCL_SOCKET_NTHREADS: "2"
+  NCCL_BUFFSIZE: "67108864"
+kind: ConfigMap
+metadata:
+  name: nccl-netwk-env-vars
+  annotations:
+    reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+    reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "test" # empty list "" for all namespaces
+    reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"

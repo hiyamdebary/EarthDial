@@ -1,0 +1,85 @@
+{
+   "Satlas_S2": {
+       "annotation": "/cos/processed_dataset/sentinel2_final",
+       "data_augment": false,
+       "repeat_time": 1,
+       "length": 539753,
+       "image_key": "png",
+       "conversation": "conversations_internlm",
+       "dynamic_image": true,
+       "bands":3
+   },
+   "Satlas_L8": {
+       "annotation": "/cos/processed_dataset/landsat_final",
+       "data_augment": false,
+       "repeat_time": 1,
+       "length": 380665,
+       "image_key": "png",
+       "conversation": "conversations_internlm",
+       "dynamic_image": true,
+       "bands":3
+   },
+   "Naip_Set0": {
+       "annotation": "/cos/processed_dataset/naip_final/naip_final_0",
+       "data_augment": false,
+       "repeat_time": 1,
+       "image_key": "png",
+       "conversation": "conversations_internlm",
+       "dynamic_image": true,
+       "bands":3
+   },
+   "Naip_Set1": {
+       "annotation": "/cos/processed_dataset/naip_final/naip_final_1",
+       "data_augment": false,
+       "repeat_time": 1,
+       "image_key": "png",
+       "conversation": "conversations_internlm",
+       "dynamic_image": true,
+       "bands":3
+   },
+   "Naip_Set2": {
+       "annotation": "/cos/processed_dataset/naip_final/naip_final_2",
+       "data_augment": false,
+       "repeat_time": 1,
+       "image_key": "png",
+       "conversation": "conversations_internlm",
+       "dynamic_image": true,
+       "bands":3
+   },
+   "Naip_Set3": {
+       "annotation": "/cos/processed_dataset/naip_final/naip_final_3",
+       "data_augment": false,
+       "repeat_time": 1,
+       "image_key": "png",
+       "conversation": "conversations_internlm",
+       "dynamic_image": true,
+       "bands":3
+   },
+   "Naip_Set4": {
+       "annotation": "/cos/processed_dataset/naip_final/naip_final_4",
+       "data_augment": false,
+       "repeat_time": 1,
+       "image_key": "png",
+       "conversation": "conversations_internlm",
+       "dynamic_image": true,
+       "bands":3
+   },
+   "Naip_Set5": {
+    "annotation": "/cos/processed_dataset/naip_final/naip_final_5",
+    "data_augment": false,
+    "repeat_time": 1,
+    "image_key": "png",
+    "conversation": "conversations_internlm",
+    "dynamic_image": true,
+    "bands":3
+},
+   "Skyscript": {
+       "annotation": "/cos/processed_dataset/skyscripts_datasets",
+       "data_augment": false,
+       "repeat_time": 1,
+       "image_key": "jpg",
+       "conversation": "conversations",
+       "dynamic_image": true,
+       "bands":3
+   }
+}

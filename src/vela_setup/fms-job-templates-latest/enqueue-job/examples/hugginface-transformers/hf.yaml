@@ -1,0 +1,35 @@
+# Job name and namespace
+namespace: YOUR_NAME_SPACE_HERE
+jobName: my-hf-job-1
+
+# Container image to be used
+#    Checkout https://github.com/foundation-model-stack/base-images/pkgs/container/base for other publicly available pytorch-nightly images
+containerImage: ghcr.io/foundation-model-stack/base:pytorch-latest-nightly-20230126
+
+imagePullSecrets:
+    - name: all-icr-io
+
+# Runtime hardware specifications
+numPods: 2
+numCpusPerPod: 64
+numGpusPerPod: 8
+totalMemoryPerPod: 100Gi
+
+# Commands
+setupCommands:
+    - pip install transformers==4.26.0 datasets==2.9.0 evaluate
+    - git clone -b v4.25-release https://github.com/huggingface/transformers.git
+    - cd transformers/examples/pytorch/text-classification/
+    - export HF_HOME=/workspace/.cache/
+    - export TASK_NAME=MNLI
+
+mainProgram: run_glue.py
+    --model_name_or_path bert-base-cased
+    --task_name $TASK_NAME
+    --do_train
+    --do_eval
+    --max_seq_length 128
+    --per_device_train_batch_size 32
+    --learning_rate 2e-5
+    --num_train_epochs 3
+    --output_dir /workspace/$TASK_NAME/
