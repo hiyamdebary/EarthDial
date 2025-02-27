@@ -37,7 +37,7 @@ Automated analysis of vast Earth observation data via interactive Vision-Languag
 
 1. Clone this repository and navigate to EarthDial folder
 ```bash
-git clone https://github.ibm.com/sagarsoni/EarthDial.git
+git clone [https://github.com/hiyamdebary/EarthDial.git]
 cd EarthDial
 ```
 
