@@ -17,32 +17,28 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 from datasets import load_from_disk
-from itertools import islice
 
 
-
-
-shards_base_path = '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards'
 
 ds_collections = {
     'NWPU_RESISC45_Captions': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/NWPU_RESISC45_Captions/NWPU_RESISC45_Captions_test',
+        'shard_path': './test_set/NWPU_RESISC45_Captions_test',
         'max_new_tokens': 100,
     },
     'RSICD_Captions': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/RSICD_Captions/RSICD_Captions_test',
+        'shard_path': './test_set/RSICD_Captions_test',
         'max_new_tokens': 100,
     },
     'RSITMD_Captions': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/RSITMD_Captions/RSITMD_Captions_test',
+        'shard_path': './test_set/RSITMD_Captions_test',
         'max_new_tokens': 100,
     },
     'sydney_Captions': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/sydney_Captions/sydney_Captions_test',
+        'shard_path': './test_set/sydney_Captions_test',
         'max_new_tokens': 100,
     },
     'UCM_captions': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/UCM_Captions/UCM_Captions_test',
+        'shard_path': './test_set/UCM_Captions_test',
         'max_new_tokens': 100,
     } 
     
