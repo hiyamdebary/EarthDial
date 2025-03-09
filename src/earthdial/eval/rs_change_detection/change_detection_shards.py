@@ -3,10 +3,8 @@ import itertools
 import json
 import os
 import random
-import subprocess
 import time
 from functools import partial
-from typing import Optional
 import sys
 sys.path.append('./internvl_chat')
 import torch
@@ -21,27 +19,74 @@ from datasets import load_from_disk
 
 
 ds_collections = {
-    'NWPU_RESISC45_Captions': {
-        'shard_path': './validation_shards/rs_caption/NWPU_RESISC45_Captions_test',
+    'Dubai_CC_test': {
+        'shard_path': './validation_shards/change_detection/Dubai_CC_ChangeDetection_test',
         'max_new_tokens': 100,
     },
-    'RSICD_Captions': {
-        'shard_path': './validation_shards/rs_caption/RSICD_Captions_test',
+    'LEVIR_MCI_test': {
+        'shard_path': './validation_shards/change_detection/LEVIR_ChangeDetection_test',
         'max_new_tokens': 100,
     },
-    'RSITMD_Captions': {
-        'shard_path': './validation_shards/rs_caption/RSITMD_Captions_test',
+    'MUDS': {
+        'shard_path': './validation_shards/change_detection/MUDS_ChangeDetection_test',
         'max_new_tokens': 100,
     },
-    'sydney_Captions': {
-        'shard_path': './validation_shards/rs_caption/sydney_Captions_test',
+    'SYSU': {
+        'shard_path': './validation_shards/change_detection/SYSU',
         'max_new_tokens': 100,
     },
-    'UCM_captions': {
-        'shard_path': './validation_shards/rs_caption/UCM_Captions_test',
+    'FMoW': {
+        'shard_path': './validation_shards/change_detection/FMoW_RGB_Valid',
         'max_new_tokens': 100,
-    } 
-    
+    },    
+    'xBD_test1': {
+            'shard_path': './validation_shards/change_detection/xBD_test_change_quest_1',
+            'max_new_tokens': 10,
+            'org_prompt': "[changedet] [hr_rgb_temp_0.5] <image> <image> \\n Analyze the images to identify the type of disaster that occurred. Options:  volcano, fire, earthquake, flood, tsunami, wind.",
+            'req_prompt': "[changedet] [hr_rgb_temp_0.5] <image> <image> \\n Analyze the images to identify the type of disaster from one of the following classes. Classes:  volcano, fire, earthquake, flood, tsunami, wind. Answer in single word."
+        },
+    'xBD_test2': {
+            'shard_path': './validation_shards/change_detection/xBD_test_change_quest_2',
+            'max_new_tokens': 10,
+            'org_prompt': " [hr_rgb_temp_0.5] <image>  <image> \\n",
+            'req_prompt': "[hr_rgb_temp_0.5] <image>  <image> \n"
+        },
+    'xBD_test3': {
+            'shard_path': './validation_shards/change_detection/xBD_test_change_quest_3',
+            'max_new_tokens': 10,
+            'org_prompt': " [hr_rgb_temp_0.5] <image> <image> \\n",
+            'req_prompt': "[hr_rgb_temp_0.5] <image>  <image> \n"
+        },
+    'xBD_test_detail': {
+            'shard_path': './validation_shards/change_detection/xBD_test_detail_quest',
+            'max_new_tokens': 50,
+            'org_prompt': "[grounding] [hr_rgb_temp_0.5] <image> <image> \\n",
+            'req_prompt': "[grounding] [hr_rgb_temp_0.5] <image> <image> \n"
+        },
+    'xBD_test_localization': {
+            'shard_path': './validation_shards/change_detection/xBD_test_localization',
+            'max_new_tokens': 100,
+            'org_prompt': "[grounding] [hr_rgb_temp_0.5] <image> <image> \\n",
+            'req_prompt': "[grounding] [hr_rgb_temp_0.5] <image> <image> \n"
+        },
+    'xBD_test_refer': {
+            'shard_path': './validation_shards/change_detection/xBD_test_refer_quest',
+            'max_new_tokens': 50,
+            'org_prompt': "[refer] [hr_rgb_temp_0.5] <image> <image> \\n",
+            'req_prompt': "[refer] [hr_rgb_temp_0.5] <image> <image> \n"
+        },
+    'xBD_test_region_based_quest1': {
+            'shard_path': './validation_shards/change_detection/xBD_test_region_based_quest1',
+            'max_new_tokens': 10,
+            'org_prompt': "classify the level of damage. Classes: no-damage, destroyed, minor-damage, major-damage.",
+            'req_prompt': "classify the level of damage in one of the below classes. Classes: no-damage, destroyed, minor-damage, major-damage."
+        },
+    'xBD_test_region_based_quest2': {
+            'shard_path': './validation_shards/change_detection/xBD_test_region_based_quest2',
+            'max_new_tokens': 10,
+            'org_prompt': "[identify] [hr_rgb_temp_0.5] <image> \\n",
+            'req_prompt': "[identify] [hr_rgb_temp_0.5] <image> \n"
+        },
 }
 
 
@@ -58,9 +103,9 @@ def collate_fn(batches, tokenizer):
     return pixel_values, questions, caption0, caption1, caption2, caption3, caption4
 
 
-class RSDataset(torch.utils.data.Dataset):
+class CD_Dataset(torch.utils.data.Dataset):
 
-    def __init__(self, shard_path, input_size=224, dynamic_image_size=False,
+    def __init__(self, ds_name, shard_path, input_size=224, dynamic_image_size=False,
                  use_thumbnail=False, max_num=6):
         self.test = load_from_disk(shard_path)
         self.input_size = input_size
@@ -68,6 +113,7 @@ class RSDataset(torch.utils.data.Dataset):
         self.use_thumbnail = use_thumbnail
         self.max_num = max_num        
         self.transform = build_transform(is_train=False, input_size=input_size)
+        self.ds_name = ds_name
 
     def __len__(self):
         return len(self.test)
@@ -76,25 +122,59 @@ class RSDataset(torch.utils.data.Dataset):
         data = self.test[idx]
         
         
-        image = data['jpg'].convert('RGB')        
-        question = data['question']
-        caption0 = data['groundtruth0']
-        caption1 = data['groundtruth1']
-        caption2 = data['groundtruth2']
-        caption3 = data['groundtruth3']
-        caption4 = data['groundtruth4']
+        if self.ds_name == 'MUDS' or self.ds_name == 'FMoW':
+            image_1 = data['jpg_A'].convert('RGB')
+            image_2 = data['jpg_B'].convert('RGB')
+            image_3 = data['jpg_C'].convert('RGB')
+            image_4 = data['jpg_D'].convert('RGB')
+            images = [image_1, image_2, image_3, image_4]
+        else:
+            image_1 = data['jpg_A'].convert('RGB')
+            image_2 = data['jpg_B'].convert('RGB')
+            images = [image_1, image_2]        
         
+        
+        merge_image, num_tiles = [], []
+        for image in images:
+            if self.dynamic_image_size:
+                images = dynamic_preprocess(image, image_size=self.input_size,
+                                            use_thumbnail=self.use_thumbnail,
+                                            max_num=self.max_num)
+                merge_image += images
+                num_tiles.append(len(images))
+            else:
+                merge_image.append(image)
+                num_tiles.append(1)
+
+        pixel_values = [self.transform(image) for image in merge_image]
+        pixel_values = torch.stack(pixel_values)
+        num_patches = pixel_values.size(0)
+            
+        if self.ds_name in {'FMoW', 'SYSU', 'xBD_test1', 'xBD_test2', 'xBD_test3', 
+                     'xBD_test_detail', 'xBD_test_localization', 'xBD_test_refer', 
+                     'xBD_test_region_based_quest1', 'xBD_test_region_based_quest2'}:
+            question = data['question']
+            caption0 = data['groundtruth']
+            caption1 = ''
+            caption2 = ''
+            caption3 = ''
+            caption4 = ''
+        else:
+            question = data['question']
+            caption0 = data['groundtruth0']
+            caption1 = data['groundtruth1']
+            caption2 = data['groundtruth2']
+            caption3 = data['groundtruth3']
+            caption4 = data['groundtruth4']
+
+        #question = question.replace(ds_collections[self.ds_name]['org_prompt'], ds_collections[self.ds_name]['req_prompt'])
+        #question = 'Locate all large <ref>buildings</ref> in the post-disaster image. Give me bounding boxes of the detected large buildings in [xmin, ymin, xmax, ymax, angle] format.'
+        
+        if self.ds_name in {'xBD_test2', 'xBD_test3', 'xBD_test_region_based_quest1', 'xBD_test_region_based_quest2'}:
+            question = question + 'Answer in single word.'
         
     
-        if self.dynamic_image_size:
-            images = dynamic_preprocess(image, image_size=self.input_size,
-                                        use_thumbnail=self.use_thumbnail,
-                                        max_num=self.max_num)
-        else:
-            images = [image]
-        pixel_values = [self.transform(image) for image in images]
-        pixel_values = torch.stack(pixel_values)
-        
+            
         return {
             'question': question,
             'pixel_values': pixel_values,
@@ -138,8 +218,10 @@ def evaluate_chat_model():
     summaries = []
 
     for ds_name in args.datasets:
+        
 
-        dataset = RSDataset(
+        dataset = CD_Dataset(
+            ds_name = ds_name,
             shard_path=ds_collections[ds_name]['shard_path'],
             input_size=image_size,
             dynamic_image_size=args.dynamic,
@@ -174,6 +256,7 @@ def evaluate_chat_model():
                 verbose=True
             )
             answers = [pred]
+            #print(pred)
             
             for question, answer, caption0, caption1, caption2, caption3, caption4 in zip(questions, answers, captions0, captions1, captions2, captions3, captions4):
                 outputs.append({
@@ -211,12 +294,13 @@ def evaluate_chat_model():
         torch.distributed.barrier()
 
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', type=str, default='')
     parser.add_argument('--base_path', type=str, default='./pretrained/')
-    parser.add_argument('--datasets', type=str, default='NWPU_RESISC45_Captions,RSICD_Captions,RSITMD_Captions,sydney_Captions,UCM_captions')
+    parser.add_argument('--datasets', type=str, default='xBD_test1,xBD_test2,xBD_test3,xBD_test_detail,xBD_test_localization,xBD_test_refer,xBD_test_region_based_quest1,xBD_test_region_based_quest2')
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--num-workers', type=int, default=1)
     parser.add_argument('--num-beams', type=int, default=5)
@@ -236,6 +320,8 @@ if __name__ == '__main__':
 
     args.datasets = args.datasets.split(',')
     print('datasets:', args.datasets)
+    print('Dynamic Imaging', args.dynamic)
+
     assert args.batch_size == 1, 'Only batch size 1 is supported'
 
     torch.distributed.init_process_group(

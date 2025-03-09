@@ -15,77 +15,99 @@ from internvl.train.dataset import build_transform, dynamic_preprocess
 from PIL import Image
 from tqdm import tqdm
 from transformers import AutoTokenizer
+import json
+
+import nltk
+
+# Download necessary resources if not already available
+nltk.download('wordnet')
 
 from datasets import load_from_disk
+import warnings
 
+warnings.filterwarnings("once")
 
 
 ds_collections = {
-    'NWPU_RESISC45_Captions': {
-        'shard_path': './validation_shards/rs_caption/NWPU_RESISC45_Captions_test',
-        'max_new_tokens': 100,
+    'GeoChat': {
+        'shard_path': './validation_shards/region_caption/GeoChat_Bench',
+        'max_new_tokens': 30,
     },
-    'RSICD_Captions': {
-        'shard_path': './validation_shards/rs_caption/RSICD_Captions_test',
-        'max_new_tokens': 100,
+    'HIT_UAV_test': {
+        'shard_path': './validation_shards/region_caption/HIT_UAV_region_captioning_test',
+        'max_new_tokens': 30,
+        'org_prompt': " [identify] [Inf_thermal_1] <image> \\n what object is in this location",
+        'req_prompt': "[identify] [Inf_thermal_1] <image> \n What is the object present at"
     },
-    'RSITMD_Captions': {
-        'shard_path': './validation_shards/rs_caption/RSITMD_Captions_test',
-        'max_new_tokens': 100,
+    'NWPU_VHR_10_test': {
+        'shard_path': './validation_shards/region_caption/NWPU_VHR_10_test_region_captioning',
+        'max_new_tokens': 30,
+        'org_prompt': " [identify] [hr_rgb_0.5] <image> \\n what object is in this location ",
+        'req_prompt': "[identify] [hr_rgb_0.5] <image> \n what object is in this location "
     },
-    'sydney_Captions': {
-        'shard_path': './validation_shards/rs_caption/sydney_Captions_test',
-        'max_new_tokens': 100,
+    'ship_dataset_v0_test': {
+        'shard_path': './validation_shards/region_caption/ship_dataset_v0_region_captioning_test',
+        'max_new_tokens': 30,
+    },  
+    'SRSDD_V1_0_test': {
+        'shard_path': './validation_shards/region_caption/SRSDD_V1_0_region_captioning_test',
+        'max_new_tokens': 30,
     },
-    'UCM_captions': {
-        'shard_path': './validation_shards/rs_caption/UCM_Captions_test',
-        'max_new_tokens': 100,
-    } 
+    'Swimming_pool_dataset_test': {
+        'shard_path': './validation_shards/region_caption/Swimming_pool_dataset_test_region_captioning',
+        'max_new_tokens': 30,
+    },
+    'UCAS_AOD': {
+        'shard_path': './validation_shards/region_caption/UCAS_AOD_region_captioning',
+        'max_new_tokens': 30,
+    },
+    'urban_tree_crown_detection': {
+        'shard_path': './validation_shards/region_caption/urban_tree_crown_detection_region_captioning',
+        'max_new_tokens': 30,
+    },  
     
 }
-
 
 
 def collate_fn(batches, tokenizer):
     pixel_values = torch.cat([_['pixel_values'] for _ in batches], dim=0)
     questions = [_['question'] for _ in batches]
-    caption0 = [_['caption0'] for _ in batches]
-    caption1 = [_['caption1'] for _ in batches]
-    caption2 = [_['caption2'] for _ in batches]
-    caption3 = [_['caption3'] for _ in batches]
-    caption4 = [_['caption4'] for _ in batches]
+    task_types = [_['task_type'] for _ in batches]
+    annotations = [_['annotation'] for _ in batches]
+    size_groups = [_['size_group'] for _ in batches]
 
-    return pixel_values, questions, caption0, caption1, caption2, caption3, caption4
+    return pixel_values, questions, annotations, task_types, size_groups
+
 
 
 class RSDataset(torch.utils.data.Dataset):
 
-    def __init__(self, shard_path, input_size=224, dynamic_image_size=False,
+    def __init__(self, ds_name, shard_path, input_size=224, dynamic_image_size=False,
                  use_thumbnail=False, max_num=6):
         self.test = load_from_disk(shard_path)
         self.input_size = input_size
         self.dynamic_image_size = dynamic_image_size
         self.use_thumbnail = use_thumbnail
-        self.max_num = max_num        
+        self.max_num = max_num
+        self.ds_name = ds_name
+        
         self.transform = build_transform(is_train=False, input_size=input_size)
 
     def __len__(self):
         return len(self.test)
 
     def __getitem__(self, idx):
+        
         data = self.test[idx]
         
-        
-        image = data['jpg'].convert('RGB')        
+        image = data['jpg'].convert('RGB')
         question = data['question']
-        caption0 = data['groundtruth0']
-        caption1 = data['groundtruth1']
-        caption2 = data['groundtruth2']
-        caption3 = data['groundtruth3']
-        caption4 = data['groundtruth4']
+        #question = question.replace(ds_collections[self.ds_name]['org_prompt'], ds_collections[self.ds_name]['req_prompt'])
         
+        annotation = data['groundtruth']
+        task_type = data['ttype']
+        size_group = data['size_group']
         
-    
         if self.dynamic_image_size:
             images = dynamic_preprocess(image, image_size=self.input_size,
                                         use_thumbnail=self.use_thumbnail,
@@ -98,12 +120,10 @@ class RSDataset(torch.utils.data.Dataset):
         return {
             'question': question,
             'pixel_values': pixel_values,
-            'caption0': caption0,
-            'caption1': caption1,
-            'caption2': caption2,
-            'caption3': caption3,
-            'caption4': caption4
-            }
+            'task_type': task_type,
+            'annotation': annotation,
+            'size_group': size_group
+        }
 
 
 class InferenceSampler(torch.utils.data.sampler.Sampler):
@@ -138,8 +158,10 @@ def evaluate_chat_model():
     summaries = []
 
     for ds_name in args.datasets:
+        
 
         dataset = RSDataset(
+            ds_name=ds_name,
             shard_path=ds_collections[ds_name]['shard_path'],
             input_size=image_size,
             dynamic_image_size=args.dynamic,
@@ -157,7 +179,7 @@ def evaluate_chat_model():
         )
 
         outputs = []
-        for _, (pixel_values, questions, captions0, captions1, captions2, captions3, captions4) in enumerate(tqdm(dataloader)):
+        for _, (pixel_values, questions, annotations, task_types, size_groups) in enumerate(tqdm(dataloader)):
             pixel_values = pixel_values.to(torch.bfloat16).cuda()
             generation_config = dict(
                 num_beams=args.num_beams,
@@ -175,17 +197,14 @@ def evaluate_chat_model():
             )
             answers = [pred]
             
-            for question, answer, caption0, caption1, caption2, caption3, caption4 in zip(questions, answers, captions0, captions1, captions2, captions3, captions4):
+            for question, answer, annotation, task_type, size_group in zip(questions, answers, annotations, task_types, size_groups):
                 outputs.append({
-                        'question': question.strip('\"'),
-                        'answer': answer,
-                        'caption0': caption0.strip('\"'),
-                        'caption1': caption1.strip('\"'),
-                        'caption2': caption2.strip('\"'),
-                        'caption3': caption3.strip('\"'),
-                        'caption4': caption4.strip('\"')
-                    })
-                
+                    'question': question.strip('\"'),
+                    'answer': answer,                        
+                    'annotation': annotation.strip('\"'),
+                    'task_type': task_type.strip('\"'),
+                    'size_group': size_group.strip('\"')
+                })
 
         torch.distributed.barrier()
 
@@ -197,7 +216,7 @@ def evaluate_chat_model():
         merged_outputs = [_ for _ in itertools.chain.from_iterable(merged_outputs)]
 
         if torch.distributed.get_rank() == 0:
-            print(f'Evaluating {ds_name} ...')
+            print(f'{ds_name} Evaluation Complete...')
             time_prefix = time.strftime('%y%m%d%H%M%S', time.localtime())
             results_file = f'{ds_name}.jsonl'
             results_file = os.path.join(args.out_dir, results_file)
@@ -205,21 +224,21 @@ def evaluate_chat_model():
                 for entry in merged_outputs:
                     json.dump(entry, outfile)
                     outfile.write('\n')  # Write a newline after each JSON object
-            #json.dump(merged_outputs, open(results_file, 'w'))
             print('Results saved to {}'.format(results_file))
+
 
         torch.distributed.barrier()
 
-
+#
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', type=str, default='')
     parser.add_argument('--base_path', type=str, default='./pretrained/')
-    parser.add_argument('--datasets', type=str, default='NWPU_RESISC45_Captions,RSICD_Captions,RSITMD_Captions,sydney_Captions,UCM_captions')
+    parser.add_argument('--datasets', type=str, default='GeoChat,HIT_UAV_test,NWPU_VHR_10_test,ship_dataset_v0_test,SRSDD_V1_0_test,Swimming_pool_dataset_test,UCAS_AOD,urban_tree_crown_detection')
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--num-workers', type=int, default=1)
-    parser.add_argument('--num-beams', type=int, default=5)
+    parser.add_argument('--num-beams', type=int, default=2)
     parser.add_argument('--temperature', type=float, default=0.0)
     parser.add_argument('--out-dir', type=str, default='results')
     parser.add_argument('--few-shot', type=int, default=0)
@@ -234,6 +253,7 @@ if __name__ == '__main__':
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
 
+    print("+++++++++++++++++++++ Executing Region Captioning Script +++++++++++++++++++++")
     args.datasets = args.datasets.split(',')
     print('datasets:', args.datasets)
     assert args.batch_size == 1, 'Only batch size 1 is supported'
@@ -245,8 +265,9 @@ if __name__ == '__main__':
     )
 
     torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 0)))
-    args.checkpoint = args.base_path + args.checkpoint
     
+    args.checkpoint = args.base_path + args.checkpoint
+
     if args.auto:
         os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     kwargs = {'device_map': 'auto'} if args.auto else {}

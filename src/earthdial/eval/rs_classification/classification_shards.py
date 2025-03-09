@@ -15,32 +15,32 @@ from internvl.train.dataset import build_transform, dynamic_preprocess
 from PIL import Image
 from tqdm import tqdm
 from transformers import AutoTokenizer
-
+import json
 from datasets import load_from_disk
+
+import warnings
+
+warnings.filterwarnings("once")
 
 
 
 ds_collections = {
-    'NWPU_RESISC45_Captions': {
-        'shard_path': './validation_shards/rs_caption/NWPU_RESISC45_Captions_test',
-        'max_new_tokens': 100,
+    'AID': {
+        'shard_path': './validation_shards/rs_classification/AID',
+        'max_new_tokens': 10,
     },
-    'RSICD_Captions': {
-        'shard_path': './validation_shards/rs_caption/RSICD_Captions_test',
-        'max_new_tokens': 100,
+    'UCM': {
+        'shard_path': './validation_shards/rs_classification/UCM',
+        'max_new_tokens': 10,
     },
-    'RSITMD_Captions': {
-        'shard_path': './validation_shards/rs_caption/RSITMD_Captions_test',
-        'max_new_tokens': 100,
+    'WHU_19': {
+        'shard_path': './validation_shards/rs_classification/WHU_19_shards',
+        'max_new_tokens': 10,
     },
-    'sydney_Captions': {
-        'shard_path': './validation_shards/rs_caption/sydney_Captions_test',
+    'BigEarthNet': {
+        'shard_path': './validation_shards/rs_classification/BigEarthNet_test',
         'max_new_tokens': 100,
-    },
-    'UCM_captions': {
-        'shard_path': './validation_shards/rs_caption/UCM_Captions_test',
-        'max_new_tokens': 100,
-    } 
+    },  
     
 }
 
@@ -49,43 +49,36 @@ ds_collections = {
 def collate_fn(batches, tokenizer):
     pixel_values = torch.cat([_['pixel_values'] for _ in batches], dim=0)
     questions = [_['question'] for _ in batches]
-    caption0 = [_['caption0'] for _ in batches]
-    caption1 = [_['caption1'] for _ in batches]
-    caption2 = [_['caption2'] for _ in batches]
-    caption3 = [_['caption3'] for _ in batches]
-    caption4 = [_['caption4'] for _ in batches]
+    annotations = [_['annotation'] for _ in batches]
 
-    return pixel_values, questions, caption0, caption1, caption2, caption3, caption4
+    return pixel_values, questions, annotations
 
 
-class RSDataset(torch.utils.data.Dataset):
 
-    def __init__(self, shard_path, input_size=224, dynamic_image_size=False,
+
+class ClassificationDataset(torch.utils.data.Dataset):
+
+    def __init__(self, ds_name, shard_path, input_size=224, dynamic_image_size=False,
                  use_thumbnail=False, max_num=6):
         self.test = load_from_disk(shard_path)
+
         self.input_size = input_size
         self.dynamic_image_size = dynamic_image_size
         self.use_thumbnail = use_thumbnail
-        self.max_num = max_num        
+        self.max_num = max_num
         self.transform = build_transform(is_train=False, input_size=input_size)
+        self.ds_name = ds_name
 
     def __len__(self):
         return len(self.test)
 
     def __getitem__(self, idx):
         data = self.test[idx]
-        
-        
-        image = data['jpg'].convert('RGB')        
+
+        image = data['jpg'].convert('RGB')
         question = data['question']
-        caption0 = data['groundtruth0']
-        caption1 = data['groundtruth1']
-        caption2 = data['groundtruth2']
-        caption3 = data['groundtruth3']
-        caption4 = data['groundtruth4']
-        
-        
-    
+        annotation = data['groundtruth']
+
         if self.dynamic_image_size:
             images = dynamic_preprocess(image, image_size=self.input_size,
                                         use_thumbnail=self.use_thumbnail,
@@ -94,16 +87,12 @@ class RSDataset(torch.utils.data.Dataset):
             images = [image]
         pixel_values = [self.transform(image) for image in images]
         pixel_values = torch.stack(pixel_values)
-        
+      
         return {
             'question': question,
             'pixel_values': pixel_values,
-            'caption0': caption0,
-            'caption1': caption1,
-            'caption2': caption2,
-            'caption3': caption3,
-            'caption4': caption4
-            }
+            'annotation': annotation
+        }
 
 
 class InferenceSampler(torch.utils.data.sampler.Sampler):
@@ -133,13 +122,15 @@ class InferenceSampler(torch.utils.data.sampler.Sampler):
 
 
 def evaluate_chat_model():
-    
+
     random.seed(args.seed)
     summaries = []
 
     for ds_name in args.datasets:
 
-        dataset = RSDataset(
+
+        dataset = ClassificationDataset(
+            ds_name=ds_name,
             shard_path=ds_collections[ds_name]['shard_path'],
             input_size=image_size,
             dynamic_image_size=args.dynamic,
@@ -157,7 +148,7 @@ def evaluate_chat_model():
         )
 
         outputs = []
-        for _, (pixel_values, questions, captions0, captions1, captions2, captions3, captions4) in enumerate(tqdm(dataloader)):
+        for pixel_values, questions, annotations in tqdm(dataloader):
             pixel_values = pixel_values.to(torch.bfloat16).cuda()
             generation_config = dict(
                 num_beams=args.num_beams,
@@ -175,17 +166,12 @@ def evaluate_chat_model():
             )
             answers = [pred]
             
-            for question, answer, caption0, caption1, caption2, caption3, caption4 in zip(questions, answers, captions0, captions1, captions2, captions3, captions4):
+            for question, answer, annotation in zip(questions, answers, annotations):
                 outputs.append({
-                        'question': question.strip('\"'),
-                        'answer': answer,
-                        'caption0': caption0.strip('\"'),
-                        'caption1': caption1.strip('\"'),
-                        'caption2': caption2.strip('\"'),
-                        'caption3': caption3.strip('\"'),
-                        'caption4': caption4.strip('\"')
-                    })
-                
+                    'question': question.strip('\"'),
+                    'answer': answer,
+                    'annotation': annotation.strip('\"')
+                })
 
         torch.distributed.barrier()
 
@@ -197,26 +183,26 @@ def evaluate_chat_model():
         merged_outputs = [_ for _ in itertools.chain.from_iterable(merged_outputs)]
 
         if torch.distributed.get_rank() == 0:
-            print(f'Evaluating {ds_name} ...')
             time_prefix = time.strftime('%y%m%d%H%M%S', time.localtime())
+            checkpoint_name = '_'.join(args.checkpoint.split('/')[-2:])
             results_file = f'{ds_name}.jsonl'
             results_file = os.path.join(args.out_dir, results_file)
             with open(results_file, 'w') as outfile:
                 for entry in merged_outputs:
                     json.dump(entry, outfile)
                     outfile.write('\n')  # Write a newline after each JSON object
-            #json.dump(merged_outputs, open(results_file, 'w'))
             print('Results saved to {}'.format(results_file))
 
         torch.distributed.barrier()
 
 
+
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()    
+    parser.add_argument('--base_path', type=str, default='.pretrained/')
     parser.add_argument('--checkpoint', type=str, default='')
-    parser.add_argument('--base_path', type=str, default='./pretrained/')
-    parser.add_argument('--datasets', type=str, default='NWPU_RESISC45_Captions,RSICD_Captions,RSITMD_Captions,sydney_Captions,UCM_captions')
+    parser.add_argument('--datasets', type=str, default='AID,UCM,WHU_19,BigEarthNet')
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--num-workers', type=int, default=1)
     parser.add_argument('--num-beams', type=int, default=5)
@@ -234,6 +220,7 @@ if __name__ == '__main__':
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
 
+    print("Executing Classification Script +++++++++++++++++++++++++++++++")
     args.datasets = args.datasets.split(',')
     print('datasets:', args.datasets)
     assert args.batch_size == 1, 'Only batch size 1 is supported'
@@ -245,8 +232,9 @@ if __name__ == '__main__':
     )
 
     torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 0)))
-    args.checkpoint = args.base_path + args.checkpoint
     
+    args.checkpoint = args.base_path + args.checkpoint
+    print(args.checkpoint)
     if args.auto:
         os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     kwargs = {'device_map': 'auto'} if args.auto else {}

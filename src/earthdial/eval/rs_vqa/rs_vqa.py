@@ -15,33 +15,19 @@ from internvl.train.dataset import build_transform, dynamic_preprocess
 from PIL import Image
 from tqdm import tqdm
 from transformers import AutoTokenizer
-
 from datasets import load_from_disk
 
-
-
 ds_collections = {
-    'NWPU_RESISC45_Captions': {
-        'shard_path': './validation_shards/rs_caption/NWPU_RESISC45_Captions_test',
-        'max_new_tokens': 100,
+    'RSVQA_LR': {
+        'test': './validation_shards/rs_vqa/RSVQA_LR',
+        'metric': None,
+        'max_new_tokens': 10,
     },
-    'RSICD_Captions': {
-        'shard_path': './validation_shards/rs_caption/RSICD_Captions_test',
-        'max_new_tokens': 100,
-    },
-    'RSITMD_Captions': {
-        'shard_path': './validation_shards/rs_caption/RSITMD_Captions_test',
-        'max_new_tokens': 100,
-    },
-    'sydney_Captions': {
-        'shard_path': './validation_shards/rs_caption/sydney_Captions_test',
-        'max_new_tokens': 100,
-    },
-    'UCM_captions': {
-        'shard_path': './validation_shards/rs_caption/UCM_Captions_test',
-        'max_new_tokens': 100,
-    } 
-    
+    'RSVQA_HR': {
+        'test': './validation_shards/rs_vqa/RSVQA_HRBEN',
+        'metric': None,
+        'max_new_tokens': 10,
+    }
 }
 
 
@@ -49,43 +35,37 @@ ds_collections = {
 def collate_fn(batches, tokenizer):
     pixel_values = torch.cat([_['pixel_values'] for _ in batches], dim=0)
     questions = [_['question'] for _ in batches]
-    caption0 = [_['caption0'] for _ in batches]
-    caption1 = [_['caption1'] for _ in batches]
-    caption2 = [_['caption2'] for _ in batches]
-    caption3 = [_['caption3'] for _ in batches]
-    caption4 = [_['caption4'] for _ in batches]
+    annotations = [_['annotation'] for _ in batches]
+    vqa_types = [_['vqa_type'] for _ in batches]
 
-    return pixel_values, questions, caption0, caption1, caption2, caption3, caption4
+    return pixel_values, questions, annotations, vqa_types
 
 
-class RSDataset(torch.utils.data.Dataset):
+class VQADataset(torch.utils.data.Dataset):
 
-    def __init__(self, shard_path, input_size=224, dynamic_image_size=False,
+    def __init__(self, ds_name, test, prompt, input_size=224, dynamic_image_size=False,
                  use_thumbnail=False, max_num=6):
-        self.test = load_from_disk(shard_path)
+        self.test = load_from_disk(test)
+        self.prompt = prompt
         self.input_size = input_size
         self.dynamic_image_size = dynamic_image_size
         self.use_thumbnail = use_thumbnail
         self.max_num = max_num        
         self.transform = build_transform(is_train=False, input_size=input_size)
-
+        self.ds_name = ds_name
+        
     def __len__(self):
         return len(self.test)
 
     def __getitem__(self, idx):
+        
         data = self.test[idx]
         
-        
-        image = data['jpg'].convert('RGB')        
+        image = data['jpg'].convert('RGB')
         question = data['question']
-        caption0 = data['groundtruth0']
-        caption1 = data['groundtruth1']
-        caption2 = data['groundtruth2']
-        caption3 = data['groundtruth3']
-        caption4 = data['groundtruth4']
+        groundtruth = data['groundtruth']
+        vqa_type = data['ttype']
         
-        
-    
         if self.dynamic_image_size:
             images = dynamic_preprocess(image, image_size=self.input_size,
                                         use_thumbnail=self.use_thumbnail,
@@ -95,15 +75,15 @@ class RSDataset(torch.utils.data.Dataset):
         pixel_values = [self.transform(image) for image in images]
         pixel_values = torch.stack(pixel_values)
         
+        if len(self.prompt) != 0:
+            question = question + ' ' + self.prompt
+            
         return {
             'question': question,
             'pixel_values': pixel_values,
-            'caption0': caption0,
-            'caption1': caption1,
-            'caption2': caption2,
-            'caption3': caption3,
-            'caption4': caption4
-            }
+            'annotation': groundtruth,
+            'vqa_type': vqa_type
+        }
 
 
 class InferenceSampler(torch.utils.data.sampler.Sampler):
@@ -133,14 +113,17 @@ class InferenceSampler(torch.utils.data.sampler.Sampler):
 
 
 def evaluate_chat_model():
+    base_prompt = 'Answer the question using a single word.'
     
     random.seed(args.seed)
     summaries = []
 
     for ds_name in args.datasets:
-
-        dataset = RSDataset(
-            shard_path=ds_collections[ds_name]['shard_path'],
+        
+        dataset = VQADataset(
+            ds_name=ds_name,
+            test=ds_collections[ds_name]['test'],
+            prompt=base_prompt,
             input_size=image_size,
             dynamic_image_size=args.dynamic,
             use_thumbnail=use_thumbnail,
@@ -157,7 +140,7 @@ def evaluate_chat_model():
         )
 
         outputs = []
-        for _, (pixel_values, questions, captions0, captions1, captions2, captions3, captions4) in enumerate(tqdm(dataloader)):
+        for _, (pixel_values, questions, annotations, vqa_types) in enumerate(tqdm(dataloader)):
             pixel_values = pixel_values.to(torch.bfloat16).cuda()
             generation_config = dict(
                 num_beams=args.num_beams,
@@ -175,15 +158,12 @@ def evaluate_chat_model():
             )
             answers = [pred]
             
-            for question, answer, caption0, caption1, caption2, caption3, caption4 in zip(questions, answers, captions0, captions1, captions2, captions3, captions4):
+            for question, answer, annotation, vqa_type in zip(questions, answers, annotations, vqa_types):
                 outputs.append({
-                        'question': question.strip('\"'),
+                        'question': question,
                         'answer': answer,
-                        'caption0': caption0.strip('\"'),
-                        'caption1': caption1.strip('\"'),
-                        'caption2': caption2.strip('\"'),
-                        'caption3': caption3.strip('\"'),
-                        'caption4': caption4.strip('\"')
+                        'annotation': annotation,
+                        'vqa_type': vqa_type
                     })
                 
 
@@ -216,7 +196,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', type=str, default='')
     parser.add_argument('--base_path', type=str, default='./pretrained/')
-    parser.add_argument('--datasets', type=str, default='NWPU_RESISC45_Captions,RSICD_Captions,RSITMD_Captions,sydney_Captions,UCM_captions')
+    parser.add_argument('--datasets', type=str, default='RSVQA_LR,RSVQA_HR')
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--num-workers', type=int, default=1)
     parser.add_argument('--num-beams', type=int, default=5)

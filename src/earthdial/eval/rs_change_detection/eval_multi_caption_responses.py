@@ -61,8 +61,8 @@ def calculate_meteor(hypothesis, references):
     return meteor_score(references_tokens, hypothesis_tokens)
 
 
-json_path = './NWPU_RESISC45_Captions.jsonl'
-f = open(json_path)
+path = '/share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_change_detection/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change/Dubai_CC_test_dynamic.jsonl'
+f = open(path)
 data = [json.loads(line) for line in f.readlines()]
 
 
@@ -73,9 +73,8 @@ M_score = 0
 count = 0
 for idx, item in enumerate(data):
 
-    #print(item['answer'], item['annotation'])
     response = item['answer']
-    reference = [item['caption0'], item['caption1'], item['caption2'], item['caption3'], item['caption4']]
+    reference = [item['caption0'], item['caption1'], item['caption2'], item['caption3'], item['caption3']]
     
     rouge1, rougeL = calculate_rouge(response, reference)
     rouge1_precision = rouge1_precision + rouge1
@@ -89,8 +88,8 @@ rouge1_precision = rouge1_precision/count
 rougeL_precision = rougeL_precision/count
 M_score = M_score/count
 
-print(f"ROUGE-1: Precision: {rouge1_precision:.4f}")
-print(f"ROUGE-L: Precision: {rougeL_precision:.4f}")
+print(f"ROUGE-1: fmeasure: {rouge1_precision:.4f}")
+print(f"ROUGE-L: fmeasure: {rougeL_precision:.4f}")
 
 print(f"METEOR Score: {M_score:.4f}")
 
