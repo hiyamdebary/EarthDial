@@ -8,76 +8,69 @@ import time
 from functools import partial
 from typing import Optional
 import sys
-# Adjust path based on script's location
-base_dir = os.path.dirname(os.path.abspath(__file__))
-# print(f"Base path to add: {base_dir}")
-path_to_other_project = os.path.join(base_dir, "../../../")
-absolute_path = os.path.abspath(path_to_other_project)
-if not os.path.exists(absolute_path):
-    print(f"Path does not exist: {absolute_path}")
-# Add the directory to the system path
-sys.path.append(absolute_path)
+sys.path.append('./internvl_chat')
 import torch
-from geovlm.model.internvl_chat import InternVLChatModel
-from geovlm.train.dataset import build_transform, dynamic_preprocess
+from internvl.model.internvl_chat import InternVLChatModel
+from internvl.train.dataset import build_transform, dynamic_preprocess
 from PIL import Image
 from tqdm import tqdm
 from transformers import AutoTokenizer
-from sklearn.metrics import precision_score, recall_score, f1_score
-from nltk.tokenize import word_tokenize
-import json
-from datasets import load_from_disk
-#os.environ['CUDA_VISIBLE_DEVICE']= [4,5]
-#"/l/users/fahad.khan/akshay/mbzuai_ibm/cache_hf/cache_hf_new"
-#os.environ['TRANSFORMERS_CACHE']="/l/users/fahad.khan/akshay/mbzuai_ibm/cache_hf/cache_hf_new"
 
+from datasets import load_from_disk
+from itertools import islice
+
+
+
+
+shards_base_path = '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards'
 
 ds_collections = {
-    'rs_hrben_test': {
-        'test': '/cos/validation_processed_downstream_dataset/GeoChat_Bench/RSVQA_HRBEN',
-        'max_new_tokens': 3,
-    }
+    'NWPU_RESISC45_Captions': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/NWPU_RESISC45_Captions/NWPU_RESISC45_Captions_test',
+        'max_new_tokens': 100,
+    },
+    'RSICD_Captions': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/RSICD_Captions/RSICD_Captions_test',
+        'max_new_tokens': 100,
+    },
+    'RSITMD_Captions': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/RSITMD_Captions/RSITMD_Captions_test',
+        'max_new_tokens': 100,
+    },
+    'sydney_Captions': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/sydney_Captions/sydney_Captions_test',
+        'max_new_tokens': 100,
+    },
+    'UCM_captions': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_shards/Image_caption_shards/UCM_Captions/UCM_Captions_test',
+        'max_new_tokens': 100,
+    } 
+    
 }
+
 
 
 def collate_fn(batches, tokenizer):
     pixel_values = torch.cat([_['pixel_values'] for _ in batches], dim=0)
     questions = [_['question'] for _ in batches]
-    annotations = [_['annotation'] for _ in batches]
+    caption0 = [_['caption0'] for _ in batches]
+    caption1 = [_['caption1'] for _ in batches]
+    caption2 = [_['caption2'] for _ in batches]
+    caption3 = [_['caption3'] for _ in batches]
+    caption4 = [_['caption4'] for _ in batches]
 
-    return pixel_values, questions, annotations
+    return pixel_values, questions, caption0, caption1, caption2, caption3, caption4
 
 
-def evaluate_f1(reference, candidate):
-    reference = reference.strip().lower().replace(" ", "")
-    candidate = candidate.strip().lower().replace(" ", "")
-    print(reference, candidate)
-    ref_tokens = word_tokenize(reference.strip().lower())
-    cand_tokens = word_tokenize(candidate.strip().lower())
-    
-    common = set(ref_tokens) & set(cand_tokens)
-    if not common:
-        return 0  # No match at all
+class RSDataset(torch.utils.data.Dataset):
 
-    recall = len(common) / len(ref_tokens)
-    
-    return recall
-
-class VQADataset(torch.utils.data.Dataset):
-
-    def __init__(self, test, prompt, few_shot, input_size=448, dynamic_image_size=False,
+    def __init__(self, shard_path, input_size=224, dynamic_image_size=False,
                  use_thumbnail=False, max_num=6):
-       # self.test = load_from_disk("/cos/validation_processed_downstream_dataset/Classification_Shards_corrected/AID_test_Geochat_shards")
-        print("Reading shards", test)
-        self.test = load_from_disk(test)
-
-        self.prompt = prompt
+        self.test = load_from_disk(shard_path)
         self.input_size = input_size
         self.dynamic_image_size = dynamic_image_size
         self.use_thumbnail = use_thumbnail
-        self.few_shot = few_shot
-        self.max_num = max_num
-       # self.test=test
+        self.max_num = max_num        
         self.transform = build_transform(is_train=False, input_size=input_size)
 
     def __len__(self):
@@ -85,11 +78,18 @@ class VQADataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         data = self.test[idx]
-
-        image = data['jpg']
+        
+        
+        image = data['jpg'].convert('RGB')        
         question = data['question']
-        annotation = data['groundtruth']
-        print()
+        caption0 = data['groundtruth0']
+        caption1 = data['groundtruth1']
+        caption2 = data['groundtruth2']
+        caption3 = data['groundtruth3']
+        caption4 = data['groundtruth4']
+        
+        
+    
         if self.dynamic_image_size:
             images = dynamic_preprocess(image, image_size=self.input_size,
                                         use_thumbnail=self.use_thumbnail,
@@ -98,13 +98,16 @@ class VQADataset(torch.utils.data.Dataset):
             images = [image]
         pixel_values = [self.transform(image) for image in images]
         pixel_values = torch.stack(pixel_values)
-        if len(self.prompt) != 0:
-            question = question + ' ' + self.prompt
+        
         return {
             'question': question,
             'pixel_values': pixel_values,
-            'annotation': annotation
-        }
+            'caption0': caption0,
+            'caption1': caption1,
+            'caption2': caption2,
+            'caption3': caption3,
+            'caption4': caption4
+            }
 
 
 class InferenceSampler(torch.utils.data.sampler.Sampler):
@@ -134,28 +137,14 @@ class InferenceSampler(torch.utils.data.sampler.Sampler):
 
 
 def evaluate_chat_model():
-    base_prompt = 'Answer in one word or a short phrase.'
-    vizwiz_prompt = "When the provided information is insufficient, respond with 'Unanswerable'. "
-    # infovqa_prompt = 'Answer the question directly.'
-    infovqa_prompt = 'Answer the question using a single word or phrase.'
-    ai2d_prompt = ''
+    
     random.seed(args.seed)
     summaries = []
 
     for ds_name in args.datasets:
-        if 'vizwiz' in ds_name:
-            input_prompt = vizwiz_prompt + base_prompt
-        elif 'ai2d' in ds_name:
-            input_prompt = ai2d_prompt
-        elif 'infographicsvqa' in ds_name:
-            input_prompt = infovqa_prompt
-        else:
-            input_prompt = base_prompt
 
-        dataset = VQADataset(
-            test=ds_collections[ds_name]['test'],
-            prompt=input_prompt,
-            few_shot=args.few_shot,
+        dataset = RSDataset(
+            shard_path=ds_collections[ds_name]['shard_path'],
             input_size=image_size,
             dynamic_image_size=args.dynamic,
             use_thumbnail=use_thumbnail,
@@ -172,7 +161,7 @@ def evaluate_chat_model():
         )
 
         outputs = []
-        for _, (pixel_values, questions, annotations) in tqdm(enumerate(dataloader)):
+        for _, (pixel_values, questions, captions0, captions1, captions2, captions3, captions4) in enumerate(tqdm(dataloader)):
             pixel_values = pixel_values.to(torch.bfloat16).cuda()
             generation_config = dict(
                 num_beams=args.num_beams,
@@ -186,26 +175,21 @@ def evaluate_chat_model():
                 pixel_values=pixel_values,
                 question=questions[0],
                 generation_config=generation_config,
-                verbose=False
+                verbose=True
             )
             answers = [pred]
-            #print(pred)
             
-            for question, prediction, annotation in zip(questions, answers, annotations):
-                predictions=str(prediction).replace(r'\"', '').replace('"', '')
-                annotation=str(annotation).replace(r'\"', '').replace('"', '')
-
-                # print("Actual Annotation:", annotation)
-                # print("Predictions Annotation:",predictions)
-            
-                if ds_name in ['rs_hrben_test']:
-                    outputs.append({
-                        'question': question,
-                        'answer': predictions,
-                        'annotation': annotation
+            for question, answer, caption0, caption1, caption2, caption3, caption4 in zip(questions, answers, captions0, captions1, captions2, captions3, captions4):
+                outputs.append({
+                        'question': question.strip('\"'),
+                        'answer': answer,
+                        'caption0': caption0.strip('\"'),
+                        'caption1': caption1.strip('\"'),
+                        'caption2': caption2.strip('\"'),
+                        'caption3': caption3.strip('\"'),
+                        'caption4': caption4.strip('\"')
                     })
-                else:
-                    raise NotImplementedError
+                
 
         torch.distributed.barrier()
 
@@ -219,43 +203,24 @@ def evaluate_chat_model():
         if torch.distributed.get_rank() == 0:
             print(f'Evaluating {ds_name} ...')
             time_prefix = time.strftime('%y%m%d%H%M%S', time.localtime())
-            results_file = f'{ds_name}_{time_prefix}.json'
+            results_file = f'{ds_name}.jsonl'
             results_file = os.path.join(args.out_dir, results_file)
-            json.dump(merged_outputs, open(results_file, 'w'))
+            with open(results_file, 'w') as outfile:
+                for entry in merged_outputs:
+                    json.dump(entry, outfile)
+                    outfile.write('\n')  # Write a newline after each JSON object
+            #json.dump(merged_outputs, open(results_file, 'w'))
             print('Results saved to {}'.format(results_file))
 
-
-            recall = 0
-            count = 0
-            for idx, item in enumerate(merged_outputs):
-                response = item['answer']
-                reference = item['annotation']
-                
-                score = evaluate_f1(reference, response)
-                count = count + 1
-                recall = recall + score
-                
-            recall = recall/count
-            print(ds_name, recall)
-            summaries.append([args.checkpoint, ds_name, recall])
-
-
         torch.distributed.barrier()
-
-    out_path = '_'.join(args.checkpoint.split('/')[-2:])
-    writer = open(os.path.join(args.out_dir, f'{out_path}.txt'), 'a')
-    print(f"write results to file {os.path.join(args.out_dir, f'{out_path}.txt')}")
-    for summary in summaries:
-        print(summary)
-        writer.write(f'{summary}\n')
-    writer.close()
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', type=str, default='')
-    parser.add_argument('--datasets', type=str, default='rs_hrben_test')
+    parser.add_argument('--base_path', type=str, default='./pretrained/')
+    parser.add_argument('--datasets', type=str, default='NWPU_RESISC45_Captions,RSICD_Captions,RSITMD_Captions,sydney_Captions,UCM_captions')
     parser.add_argument('--batch-size', type=int, default=1)
     parser.add_argument('--num-workers', type=int, default=1)
     parser.add_argument('--num-beams', type=int, default=5)
@@ -263,7 +228,7 @@ if __name__ == '__main__':
     parser.add_argument('--out-dir', type=str, default='results')
     parser.add_argument('--few-shot', type=int, default=0)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--dynamic', default=True)
+    parser.add_argument('--dynamic', action='store_true')
     parser.add_argument('--max-num', type=int, default=6)
     parser.add_argument('--load-in-8bit', action='store_true')
     parser.add_argument('--load-in-4bit', action='store_true')
@@ -273,19 +238,19 @@ if __name__ == '__main__':
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
 
-    print("Executing Classification Script +++++++++++++++++++++++++++++++")
     args.datasets = args.datasets.split(',')
     print('datasets:', args.datasets)
     assert args.batch_size == 1, 'Only batch size 1 is supported'
 
     torch.distributed.init_process_group(
         backend='nccl',
-        world_size=int(os.getenv('WORLD_SIZE', '3')),
-        rank=int(os.getenv('RANK', '3')),
+        world_size=int(os.getenv('WORLD_SIZE', '1')),
+        rank=int(os.getenv('RANK', '0')),
     )
 
-    torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 3)))
-
+    torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 0)))
+    args.checkpoint = args.base_path + args.checkpoint
+    
     if args.auto:
         os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     kwargs = {'device_map': 'auto'} if args.auto else {}
@@ -297,7 +262,7 @@ if __name__ == '__main__':
         model = model.cuda()
     image_size = model.config.force_image_size or model.config.vision_config.image_size
     use_thumbnail = model.config.use_thumbnail
-    print("Loaded Model")
+
     total_params = sum(p.numel() for p in model.parameters()) / 1e9
     if total_params > 20 or args.dynamic:
         args.num_beams = 1
