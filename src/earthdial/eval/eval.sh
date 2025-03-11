@@ -2,10 +2,10 @@
 
 set -x
 
-CHECKPOINT=${1}
-TASK=${2}
+#CHECKPOINT=${1}
+TASK=${1}
 export PYTHONPATH="${PYTHONPATH}"
-echo "CHECKPOINT: ${CHECKPOINT}"
+#echo "CHECKPOINT: ${CHECKPOINT}"
 echo "CHECKPOINT: ${TASK}"
 
 MASTER_PORT=${MASTER_PORT:-6391}
@@ -37,9 +37,26 @@ echo "GPUS: ${GPUS}"
 
 
 
-if [ "${TASK}" = "rs_classification" ]; then
+if [ "${TASK}" = "rs_classification_RGB" ]; then
     
-    DATASETS='AID,UCM,WHU_19,BigEarthNet_RGB,rs_LCZ_test,TreeSatAI,BigEarthNet_S2'
+    DATASETS='AID,UCM,WHU_19,BigEarthNet_RGB'
+    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
+
+    torchrun \
+    --nnodes=1 \
+    --node_rank=0 \
+    --master_addr=127.0.0.1 \
+    --nproc_per_node=${GPUS} \
+    --master_port=${MASTER_PORT} \
+    src/earthdial/eval/rs_classification/classification_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_classification/results "${ARGS[@]:2}"
+
+    clear && python src/earthdial/eval/rs_classification/eval.py --datasets ${DATASETS}
+fi
+
+if [ "${TASK}" = "rs_classification_MS" ]; then
+    
+    DATASETS='rs_LCZ_test,TreeSatAI,BigEarthNet_S2'
+    CHECKPOINT='./checkpoints/EarthDial_4B_MS'
 
     torchrun \
     --nnodes=1 \

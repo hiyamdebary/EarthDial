@@ -44,17 +44,12 @@ EarthDial/validation_data/
 To execute the evaluation process on an **8-GPU setup**, run the following command:
 
 ```shell
-# Test the rs_caption datasets
-GPUS=8 sh eval.sh checkpoints/EarthDial_4B image_captioning --dynamic
+# Test the rs_classification datasets
+GPUS=8 ./src/earthdial/eval/eval.sh rs_classification_RGB --dynamic
+GPUS=8 ./src/earthdial/eval/eval.sh rs_classification_MS --dynamic
 ```
 
-After testing, a results file (e.g., `results/NWPU_RESISC45_Captions.jsonl`) will be generated.
-
-To evaluate the **rs_caption datasets**, run:
-
-```shell
-python caption_eval.py
-```
+This tests our EarthDial-4B on for classification task, saves result files (e.g., `src/earthdial/eval/rs_classification/results/AID.jsonl`) and displays the classification accuracy.
 
 ---
 
