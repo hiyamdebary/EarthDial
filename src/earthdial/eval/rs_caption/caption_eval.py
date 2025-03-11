@@ -7,7 +7,7 @@ import json
 import os
 
 
-def calculat_rouge(hypothesis, references):
+def calculate_rouge(hypothesis, references):
     """
     Calculate ROUGE score for a hypothesis against multiple references.
 

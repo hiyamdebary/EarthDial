@@ -28,6 +28,7 @@ from .modeling_intern_vit import InternVisionModel
 
 logger = logging.get_logger(__name__)
 
+import multiprocessing
 
 def version_cmp(v1, v2, op='eq'):
     import operator
@@ -291,6 +292,7 @@ class InternVLChatModel(PreTrainedModel):
     
     @torch.no_grad()
     def sequential_vit_features(self, pixel_values,mm_spatial_pool_mode):
+        multiprocessing.set_start_method("spawn", force=True)
         # Determine batch size, number of channels, height, and width
         batch_size, num_channels, height, width = pixel_values.shape
         

@@ -8,17 +8,19 @@ import time
 from functools import partial
 from typing import Optional
 import sys
-sys.path.append('./internvl_chat')
+sys.path.append('./src')
 import torch
-from internvl.model.internvl_chat import InternVLChatModel
-from internvl.train.dataset import build_transform, dynamic_preprocess
+from earthdial.model.internvl_chat import InternVLChatModel
+from earthdial.train.dataset import build_transform, dynamic_preprocess
 from PIL import Image
 from tqdm import tqdm
 from transformers import AutoTokenizer
 import json
 from datasets import load_from_disk
-
+import numpy as np
 import warnings
+import torch.distributed as dist
+from itertools import islice
 
 warnings.filterwarnings("once")
 
@@ -26,21 +28,50 @@ warnings.filterwarnings("once")
 
 ds_collections = {
     'AID': {
-        'shard_path': './validation_shards/rs_classification/AID',
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/AID',
         'max_new_tokens': 10,
+        'normalization': 'imagenet',
+        'pooling': None
     },
     'UCM': {
-        'shard_path': './validation_shards/rs_classification/UCM',
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/UCM',
         'max_new_tokens': 10,
+        'normalization': 'imagenet',
+        'pooling': None
     },
     'WHU_19': {
-        'shard_path': './validation_shards/rs_classification/WHU_19_shards',
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/WHU_19',
         'max_new_tokens': 10,
+        'normalization': 'imagenet',
+        'pooling': None
     },
-    'BigEarthNet': {
-        'shard_path': './validation_shards/rs_classification/BigEarthNet_test',
-        'max_new_tokens': 100,
+    'BigEarthNet_RGB': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/BigEarthNet_RGB/BigEarthNet_test',
+        'max_new_tokens': 500,
+        'normalization': 'imagenet',
+        'pooling': None
     },  
+    'rs_LCZ_test': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/LCZs_S2/LCZs_S2_test',
+        'max_new_tokens': 10,
+        'bands':10,
+        'normalization':'s2_norm',
+        'pooling': 'bilinear'
+    },
+    'TreeSatAI': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/TreeSatAI/TreeSatAI_test',
+        'max_new_tokens': 10,
+        'bands':4,
+        'normalization':'tree_norm',
+        'pooling': 'bilinear'
+    },
+    'BigEarthNet_S2': {
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/BigEarthNet_S2/BigEarthNet_S2_Test',
+        'max_new_tokens': 500,
+        'bands':12,
+        'normalization':'s2_l2a',
+        'pooling': 'average'
+    }
     
 }
 
@@ -58,36 +89,51 @@ def collate_fn(batches, tokenizer):
 
 class ClassificationDataset(torch.utils.data.Dataset):
 
-    def __init__(self, ds_name, shard_path, input_size=224, dynamic_image_size=False,
-                 use_thumbnail=False, max_num=6):
+    def __init__(self, model, ds_name, shard_path, input_size=224, dynamic_image_size=False,
+                 use_thumbnail=False, max_num=6, normalize_type="imagenet", pooling='average'):
+        
         self.test = load_from_disk(shard_path)
-
+        self.ds_name = ds_name
         self.input_size = input_size
         self.dynamic_image_size = dynamic_image_size
         self.use_thumbnail = use_thumbnail
         self.max_num = max_num
         self.transform = build_transform(is_train=False, input_size=input_size)
-        self.ds_name = ds_name
+
+        self.model=model        
+        self.transform = build_transform(is_train=False, input_size=input_size,normalize_type=normalize_type)
+        self.pooling = pooling
+        
 
     def __len__(self):
         return len(self.test)
 
     def __getitem__(self, idx):
-        data = self.test[idx]
 
-        image = data['jpg'].convert('RGB')
+        data = self.test[idx]
         question = data['question']
         annotation = data['groundtruth']
 
-        if self.dynamic_image_size:
-            images = dynamic_preprocess(image, image_size=self.input_size,
+
+        if self.ds_name in {'rs_LCZ_test', 'BigEarthNet_S2'}:
+            image = data['tif_ms']
+        elif self.ds_name == 'TreeSatAI':
+            image = data['rgbi']
+        else:
+            image = data['jpg'].convert('RGB')
+      
+
+        if self.ds_name in {'AID', 'UCM', 'WHU_19', 'BigEarthNet_RGB'}:
+            images = (dynamic_preprocess(image, image_size=self.input_size,
                                         use_thumbnail=self.use_thumbnail,
                                         max_num=self.max_num)
+                    if self.dynamic_image_size else [image])
+            pixel_values = torch.stack([self.transform(img) for img in images])
         else:
-            images = [image]
-        pixel_values = [self.transform(image) for image in images]
-        pixel_values = torch.stack(pixel_values)
-      
+            pixel_values = torch.tensor(np.array(image), dtype=torch.float32).unsqueeze(0)
+            pixel_values = torch.stack([self.transform(pixel_value) for pixel_value in pixel_values])
+            pixel_values = self.model.sequential_vit_features(pixel_values, self.pooling)
+
         return {
             'question': question,
             'pixel_values': pixel_values,
@@ -121,22 +167,25 @@ class InferenceSampler(torch.utils.data.sampler.Sampler):
         return len(self._local_indices)
 
 
-def evaluate_chat_model():
+def evaluate_chat_model(model):
 
     random.seed(args.seed)
     summaries = []
 
     for ds_name in args.datasets:
 
-
         dataset = ClassificationDataset(
+            model=model,
             ds_name=ds_name,
             shard_path=ds_collections[ds_name]['shard_path'],
             input_size=image_size,
             dynamic_image_size=args.dynamic,
             use_thumbnail=use_thumbnail,
-            max_num=args.max_num
+            max_num=args.max_num,
+            normalize_type=ds_collections[ds_name]['normalization'],
+            pooling=ds_collections[ds_name]['pooling']
         )
+
         dataloader = torch.utils.data.DataLoader(
             dataset=dataset,
             sampler=InferenceSampler(len(dataset)),
@@ -148,7 +197,8 @@ def evaluate_chat_model():
         )
 
         outputs = []
-        for pixel_values, questions, annotations in tqdm(dataloader):
+        for pixel_values, questions, annotations in islice(tqdm(dataloader), 10):
+        #for pixel_values, questions, annotations in tqdm(dataloader):
             pixel_values = pixel_values.to(torch.bfloat16).cuda()
             generation_config = dict(
                 num_beams=args.num_beams,
@@ -162,7 +212,7 @@ def evaluate_chat_model():
                 pixel_values=pixel_values,
                 question=questions[0],
                 generation_config=generation_config,
-                verbose=True
+                verbose=False
             )
             answers = [pred]
             
@@ -190,7 +240,7 @@ def evaluate_chat_model():
             with open(results_file, 'w') as outfile:
                 for entry in merged_outputs:
                     json.dump(entry, outfile)
-                    outfile.write('\n')  # Write a newline after each JSON object
+                    outfile.write('\n') 
             print('Results saved to {}'.format(results_file))
 
         torch.distributed.barrier()
@@ -199,18 +249,16 @@ def evaluate_chat_model():
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()    
-    parser.add_argument('--base_path', type=str, default='.pretrained/')
-    parser.add_argument('--checkpoint', type=str, default='')
-    parser.add_argument('--datasets', type=str, default='AID,UCM,WHU_19,BigEarthNet')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint', type=str, default='./checkpoints/EarthDial_4B_RGB')
+    parser.add_argument('--datasets', type=str, default='UCM')
     parser.add_argument('--batch-size', type=int, default=1)
-    parser.add_argument('--num-workers', type=int, default=1)
+    parser.add_argument('--num-workers', type=int, default=0)
     parser.add_argument('--num-beams', type=int, default=5)
     parser.add_argument('--temperature', type=float, default=0.0)
-    parser.add_argument('--out-dir', type=str, default='results')
-    parser.add_argument('--few-shot', type=int, default=0)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--dynamic', action='store_true')
+    parser.add_argument('--out-dir', type=str, default='results')
     parser.add_argument('--max-num', type=int, default=6)
     parser.add_argument('--load-in-8bit', action='store_true')
     parser.add_argument('--load-in-4bit', action='store_true')
@@ -220,7 +268,6 @@ if __name__ == '__main__':
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
 
-    print("Executing Classification Script +++++++++++++++++++++++++++++++")
     args.datasets = args.datasets.split(',')
     print('datasets:', args.datasets)
     assert args.batch_size == 1, 'Only batch size 1 is supported'
@@ -233,8 +280,6 @@ if __name__ == '__main__':
 
     torch.cuda.set_device(int(os.getenv('LOCAL_RANK', 0)))
     
-    args.checkpoint = args.base_path + args.checkpoint
-    print(args.checkpoint)
     if args.auto:
         os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     kwargs = {'device_map': 'auto'} if args.auto else {}
@@ -258,4 +303,4 @@ if __name__ == '__main__':
     print(f'[test] dynamic_image_size: {args.dynamic}')
     print(f'[test] use_thumbnail: {use_thumbnail}')
 
-    evaluate_chat_model()
+    evaluate_chat_model(model)
