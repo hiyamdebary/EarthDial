@@ -321,7 +321,7 @@ def build_transform(is_train, input_size, pad2square=False, normalize_type='imag
                     ])
             elif normalize_type=="s1":
                 transform = T.Compose([
-                     #   T.ToTensor(),
+                        T.ToTensor(),
                         T.Lambda(lambda x: x.unsqueeze(0) if x.ndim == 2 else x),  # Add channel dim if grayscale
                         T.Normalize(mean=S1_MEAN, std=S1_STD),
                         T.Resize((input_size, input_size), interpolation=InterpolationMode.BICUBIC)
@@ -332,7 +332,7 @@ def build_transform(is_train, input_size, pad2square=False, normalize_type='imag
                     T.Lambda(lambda img: img if img.mode == 'L' else img.convert('RGB')),  # Keep grayscale as is, convert others to RGB
                     T.Resize((input_size, input_size), interpolation=InterpolationMode.BICUBIC),
                     T.ToTensor(),
-                    T.Normalize(mean=MEAN, std=STD)
+                    T.Normalize(mean=MEAN, std=STD)                    
                 ])
         else:
             transform = T.Compose([

@@ -50,8 +50,10 @@ if [ "${TASK}" = "rs_classification_RGB" ]; then
     --master_port=${MASTER_PORT} \
     src/earthdial/eval/rs_classification/classification_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_classification/results "${ARGS[@]:2}"
 
-    clear && python src/earthdial/eval/rs_classification/eval.py --datasets ${DATASETS}
+    python src/earthdial/eval/rs_classification/eval.py --datasets ${DATASETS}
 fi
+
+
 
 if [ "${TASK}" = "rs_classification_MS" ]; then
     
@@ -70,65 +72,166 @@ if [ "${TASK}" = "rs_classification_MS" ]; then
 fi
 
 
-if [ "${DATASET}" = "detection_shards" ]; then
+
+if [ "${TASK}" = "rs_image_caption" ]; then
+    
+    DATASETS='NWPU_RESISC45_Captions,RSICD_Captions,RSITMD_Captions,sydney_Captions,UCM_captions'
+    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
+
     torchrun \
     --nnodes=1 \
     --node_rank=0 \
     --master_addr=127.0.0.1 \
     --nproc_per_node=${GPUS} \
     --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_detection/detection_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_detection/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
+    src/earthdial/eval/rs_image_caption/captioning_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_image_caption/results "${ARGS[@]:2}"
+
+    clear && python src/earthdial/eval/rs_image_caption/eval.py --datasets ${DATASETS}
 fi
 
-if [ "${DATASET}" = "identify_shards" ]; then
+
+
+if [ "${TASK}" = "rs_detection_RGB" ]; then
+    
+    DATASETS='GeoChat,NWPU_VHR_10,Swimming_pool_dataset,urban_tree_crown_detection'
+    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
+
     torchrun \
     --nnodes=1 \
     --node_rank=0 \
     --master_addr=127.0.0.1 \
     --nproc_per_node=${GPUS} \
     --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_identify/identify_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_identify/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
+    src/earthdial/eval/rs_detection/detection_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_detection/results "${ARGS[@]:2}"
+
+    clear && python src/earthdial/eval/rs_detection/eval.py --datasets ${DATASETS}
 fi
 
-if [ "${DATASET}" = "grounding_description" ]; then
+if [ "${TASK}" = "rs_detection_MS" ]; then
+    
+    DATASETS='ship_dataset_v0'
+    CHECKPOINT='./checkpoints/EarthDial_8B_MS'
+
     torchrun \
     --nnodes=1 \
     --node_rank=0 \
     --master_addr=127.0.0.1 \
     --nproc_per_node=${GPUS} \
     --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_description/rs_grounding_desscription.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_description/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
+    src/earthdial/eval/rs_detection/detection_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_detection/results "${ARGS[@]:2}"
+
+    clear && python src/earthdial/eval/rs_detection/eval.py --datasets ${DATASETS}
 fi
 
-if [ "${DATASET}" = "caption_shards" ]; then
+
+
+if [ "${TASK}" = "rs_region_captioning" ]; then
+    
+    DATASETS='GeoChat,HIT_UAV_test,NWPU_VHR_10_test,ship_dataset_v0_test,SRSDD_V1_0_test,Swimming_pool_dataset_test,UCAS_AOD,urban_tree_crown_detection'
+    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
+
     torchrun \
     --nnodes=1 \
     --node_rank=0 \
     --master_addr=127.0.0.1 \
     --nproc_per_node=${GPUS} \
     --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_caption/captioning_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_caption/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
+    src/earthdial/eval/rs_region_captioning/captioning_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_region_captioning/results "${ARGS[@]:2}"
+
+    clear && python src/earthdial/eval/rs_region_captioning/eval.py --datasets ${DATASETS}
 fi
 
-if [ "${DATASET}" = "vqa-rs-test" ]; then
+
+if [ "${TASK}" = "rs_grounding_description" ]; then
+    
+    DATASETS='HIT_UAV,NWPU_VHR_10,Swimming_pool_dataset,UCAS_AOD'
+    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
+
     torchrun \
     --nnodes=1 \
     --node_rank=0 \
     --master_addr=127.0.0.1 \
     --nproc_per_node=${GPUS} \
     --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_vqa/rs_vqa.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_vqa/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
+    src/earthdial/eval/rs_grounding_description/grounding_desscription_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_grounding_description/results "${ARGS[@]:2}"
+
+    clear && python src/earthdial/eval/rs_grounding_description/eval.py --datasets ${DATASETS}
 fi
 
-if [ "${DATASET}" = "change_detection" ]; then
+
+if [ "${TASK}" = "rs_vqa" ]; then
+    
+    DATASETS='RSVQA_LR,RSVQA_HR'
+    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
+
     torchrun \
     --nnodes=1 \
     --node_rank=0 \
     --master_addr=127.0.0.1 \
     --nproc_per_node=${GPUS} \
     --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_change_detection/change_detection_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_change_detection/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
+    src/earthdial/eval/rs_vqa/vqa_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_vqa/results "${ARGS[@]:2}"
+
+    clear && python src/earthdial/eval/rs_vqa/eval.py --datasets ${DATASETS}
 fi
+
+
+if [ "${TASK}" = "rs_change_detection" ]; then
+    
+
+    #Change detection datasets: Dubai_CC,LEVIR_MCI,MUDS,SYSU
+
+    #Image Captioning dataset: xBD_image_captioning
+    #Region Classification dataset: xBD_reg_cls_testset_1,xBD_reg_cls_testset_2
+    #Image Classification Task Datasets: FMoW,xBD_testset_1,xBD_testset_2,xBD_testset_3
+    #Object Detection dataset: xBD_object_detection
+    #Reffered Object Detection dataset: xBD_referred_object_detection
+    
+    DATASETS='Dubai_CC,LEVIR_MCI,MUDS,SYSU'
+    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
+
+    torchrun \
+    --nnodes=1 \
+    --node_rank=0 \
+    --master_addr=127.0.0.1 \
+    --nproc_per_node=${GPUS} \
+    --master_port=${MASTER_PORT} \
+    src/earthdial/eval/rs_change_detection/rs_change_detection_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir /share/data/drive_2/remote_sensing/EarthDial/src/earthdial/eval/rs_change_detection/results "${ARGS[@]:2}"
+
+    clear && python src/earthdial/eval/rs_change_detection/eval_detection.py --datasets ${DATASETS}
+    #python src/earthdial/eval/rs_change_detection/eval_detection.py --datasets ${DATASETS}
+    python src/earthdial/eval/rs_change_detection/eval_classification.py --datasets ${DATASETS}
+    python src/earthdial/eval/rs_change_detection/eval_caption.py --datasets ${DATASETS}
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 if [ "${DATASET}" = "MS_detection_shards" ]; then
@@ -141,15 +244,7 @@ if [ "${DATASET}" = "MS_detection_shards" ]; then
     /share/data/drive_2/remote_sensing/InternVL/GeoVLM_Git/src/geovlm/eval/rs_classification/MS_detection_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_detection/MS_shards_results/4B_Full_8Nov_Pretrained_MS_MLP_LLM "${ARGS[@]:2}"
 fi
 
-if [ "${DATASET}" = "MS_classification_shards" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_classification/classification_shards_MS_LCZ.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_classification/MS_shards_results/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change_MS "${ARGS[@]:2}"
-fi
+
 
 if [ "${DATASET}" = "methane_plume" ]; then
     torchrun \
@@ -172,27 +267,6 @@ if [ "${DATASET}" = "quakeset_shards" ]; then
 fi
 
 
-
-
-if [ "${DATASET}" = "GeoBench_classification_shards" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval_copy/rs_classification/GeoBench_classification_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval_copy/rs_GeoBench_classification/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
-fi
-
-if [ "${DATASET}" = "GeoBench_change_detection" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval_copy/GEOBench_change_detection/change_detection_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval_copy/GEOBench_change_detection/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
-fi
 
 
 
@@ -227,168 +301,3 @@ if [ "${DATASET}" = "UHI" ]; then
     /share/data/drive_2/remote_sensing/InternVL/GeoVLM_Git/src/geovlm/eval/rs_classification/classification_shards_MS_UHI.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_UHI/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change_MS_UHI_Methane "${ARGS[@]:2}"
 fi
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-if [ "${DATASET}" = "ms_grounding_description" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/GeoVLM_Git/src/geovlm/eval/rs_classification/MS_grounding_description_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_description/8B_Full_3Nov_RGBAll_MLP_LLM_1 "${ARGS[@]:2}"
-fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-if [ "${DATASET}" = "classification" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_classification/classification.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_classification/results_speed "${ARGS[@]:2}"
-fi
-
-
-
-
-
-if [ "${DATASET}" = "GEOBench_detection_shards" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/GEOBench_detection/detection_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/GEOBench_detection/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
-fi
-
-
-
-
-
-
-
-if [ "${DATASET}" = "MS_identify_shards" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/GeoVLM_Git/src/geovlm/eval/rs_classification/MS_identify_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_identify/ms_shards_results/4B_Full_8Nov_Pretrained_MS_MLP_LLM "${ARGS[@]:2}"
-fi
-
-
-
-
-
-
-
-
-
-
-
-if [ "${DATASET}" = "Geobench_caption_shards" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/GEOBench_captioning/captioning_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/GEOBench_captioning/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change "${ARGS[@]:2}"
-fi
-
-
-
-
-
-
-if [ "${DATASET}" = "ms_grounding_description" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/GeoVLM_Git/src/geovlm/eval/rs_classification/MS_grounding_description_shards.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_description/8B_Full_3Nov_RGBAll_MLP_LLM_1 "${ARGS[@]:2}"
-fi
-
-
-
-
-
-
-
-
-if [ "${DATASET}" = "ucmerced-rs-test" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /l/users/fahad.khan/akshay/mbzuai_ibm/InternVL/internvl_chat/eval/rs_classification/classification.py --checkpoint ${CHECKPOINT} --datasets rs_ucmerced_test --out-dir /l/users/fahad.khan/akshay/mbzuai_ibm/InternVL/internvl_chat/eval/rs_classification/results "${ARGS[@]:2}"
-fi
-
-if [ "${DATASET}" = "identify-rs-test" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_grounding/rs_evaluate_identify.py --checkpoint ${CHECKPOINT} --datasets ref_geochat_val --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_grounding/results_identify "${ARGS[@]:2}"
-fi
-
-if [ "${DATASET}" = "rs_ref_geochat-val" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_grounding/rs_evaluate_refer.py --checkpoint ${CHECKPOINT} --datasets ref_geochat_val --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_grounding/results_refer "${ARGS[@]:2}"
-fi

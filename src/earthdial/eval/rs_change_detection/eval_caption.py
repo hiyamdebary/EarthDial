@@ -6,7 +6,9 @@ import numpy as np
 import json
 import os
 
-
+import argparse
+from colorama import Fore, init
+init(autoreset=True)  # Initialize Colorama
 
 
 ## This script is to evaluate Dubai CC, LEVIR_MCI_test, and MUDS dataset for change detection.
@@ -68,36 +70,47 @@ def calculate_meteor(hypothesis, references):
 
 
 
-path = '/share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_change_detection/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change/FMoW.jsonl'
-f = open(path)
-data = [json.loads(line) for line in f.readlines()]
+if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--datasets', type=str, default='Dubai_CC')
+    args = parser.parse_args()
 
-rouge1_precision, rouge1_recall, rouge1_fscore = 0, 0, 0
-rougeL_precision, rougeL_recall, rougeL_fscore = 0, 0, 0
-M_score = 0
+    args.datasets = args.datasets.split(',')
 
-count = 0
-for idx, item in enumerate(data):
+    for ds_name in args.datasets:
+        json_path = f'src/earthdial/eval/rs_change_detection/results/{ds_name}.jsonl'
+        f = open(json_path)
 
-    response = item['answer']
-    #reference = [item['caption0'], item['caption1'], item['caption2'], item['caption3'], item['caption4']]
-    reference = [item['caption0']]
+        data = [json.loads(line) for line in f.readlines()]
 
-    rouge1, rougeL = calculate_rouge(response, reference)
-    rouge1_fscore = rouge1_fscore + rouge1
-    rougeL_fscore = rougeL_fscore + rougeL
-    
-    #print(rouge_scores)
-    M_score = M_score + calculate_meteor(response, reference)
-    count = count + 1
-    
-rouge1_fscore = rouge1_fscore/count
-rougeL_fscore = rougeL_fscore/count
-M_score = M_score/count
+        rouge1_precision, rouge1_recall, rouge1_fscore = 0, 0, 0
+        rougeL_precision, rougeL_recall, rougeL_fscore = 0, 0, 0
+        M_score = 0
 
-print(f"ROUGE-1: fmeasure: {rouge1_fscore:.4f}")
-print(f"ROUGE-L: fmeasure: {rougeL_fscore:.4f}")
+        count = 0
+        for idx, item in enumerate(data):
 
-print(f"METEOR Score: {M_score:.4f}")
-
+            response = item['answer']
+            
+            if len(item['caption1']) == 0:
+                reference = [item['caption0']]
+            else:
+                reference = [item['caption0'], item['caption1'], item['caption2'], item['caption3'], item['caption4']]
+            
+            rouge1, rougeL = calculate_rouge(response, reference)
+            rouge1_fscore = rouge1_fscore + rouge1
+            rougeL_fscore = rougeL_fscore + rougeL
+            
+            M_score = M_score + calculate_meteor(response, reference)
+            count = count + 1
+            
+        rouge1_fscore = rouge1_fscore/count
+        rougeL_fscore = rougeL_fscore/count
+        M_score = M_score/count
+        print('-'*40)
+        print(f'{Fore.RED}Scores for {ds_name} dataset')
+        print(f'{Fore.RED}ROUGE-1: Fmeasure: {rouge1_fscore:.4f}')
+        print(f'{Fore.RED}ROUGE-L: Fmeasure: {rougeL_fscore:.4f}')
+        print(f'{Fore.RED}METEOR Score: {M_score:.4f}')
+        print('-'*40)

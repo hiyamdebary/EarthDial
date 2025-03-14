@@ -1,6 +1,5 @@
 import argparse
 import itertools
-import json
 import os
 import random
 import subprocess
@@ -28,45 +27,45 @@ warnings.filterwarnings("once")
 
 ds_collections = {
     'AID': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/AID',
+        'shard_path': './validation_data/Classification/AID',
         'max_new_tokens': 10,
         'normalization': 'imagenet',
         'pooling': None
     },
     'UCM': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/UCM',
+        'shard_path': './validation_data/Classification/UCM',
         'max_new_tokens': 10,
         'normalization': 'imagenet',
         'pooling': None
     },
     'WHU_19': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/WHU_19',
+        'shard_path': './validation_data/Classification/WHU_19',
         'max_new_tokens': 10,
         'normalization': 'imagenet',
         'pooling': None
     },
     'BigEarthNet_RGB': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/BigEarthNet_RGB/BigEarthNet_test',
+        'shard_path': './validation_data/Classification/BigEarthNet_RGB/BigEarthNet_test',
         'max_new_tokens': 500,
         'normalization': 'imagenet',
         'pooling': None
     },  
     'rs_LCZ_test': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/LCZs_S2/LCZs_S2_test',
+        'shard_path': './validation_data/Classification/LCZs_S2/LCZs_S2_test',
         'max_new_tokens': 10,
         'bands':10,
         'normalization':'s2_norm',
         'pooling': 'bilinear'
     },
     'TreeSatAI': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/TreeSatAI/TreeSatAI_test',
+        'shard_path': './validation_data/Classification/TreeSatAI/TreeSatAI_test',
         'max_new_tokens': 10,
         'bands':4,
         'normalization':'tree_norm',
         'pooling': 'bilinear'
     },
     'BigEarthNet_S2': {
-        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Classification/BigEarthNet_S2/BigEarthNet_S2_Test',
+        'shard_path': './validation_data/Classification/BigEarthNet_S2/BigEarthNet_S2_Test',
         'max_new_tokens': 500,
         'bands':12,
         'normalization':'s2_l2a',
@@ -197,8 +196,8 @@ def evaluate_chat_model(model):
         )
 
         outputs = []
-        for pixel_values, questions, annotations in islice(tqdm(dataloader), 10):
-        #for pixel_values, questions, annotations in tqdm(dataloader):
+        #for pixel_values, questions, annotations in islice(tqdm(dataloader), 10):
+        for pixel_values, questions, annotations in tqdm(dataloader):
             pixel_values = pixel_values.to(torch.bfloat16).cuda()
             generation_config = dict(
                 num_beams=args.num_beams,

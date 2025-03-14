@@ -46,7 +46,7 @@ To execute the evaluation process on an **8-GPU setup**, run the following comma
 ```shell
 # Test the rs_classification datasets
 GPUS=8 ./src/earthdial/eval/eval.sh rs_classification_RGB --dynamic
-GPUS=8 ./src/earthdial/eval/eval.sh rs_classification_MS --dynamic
+GPUS=8 ./src/earthdial/eval/eval.sh rs_classification_MS
 ```
 
 This tests our EarthDial-4B on for classification task, saves result files (e.g., `src/earthdial/eval/rs_classification/results/AID.jsonl`) and displays the classification accuracy.
