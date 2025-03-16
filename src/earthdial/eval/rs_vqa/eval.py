@@ -6,7 +6,7 @@ from colorama import Fore, init
 init(autoreset=True)  # Initialize Colorama
 
 
-def evaluate_f1(reference, candidate):
+def evaluate(reference, candidate):
     reference = reference.strip().lower().replace(" ", "")
     candidate = candidate.strip().lower().replace(" ", "")
     #print(reference, candidate)
@@ -57,7 +57,7 @@ if __name__ == '__main__':
             vqa_type = item['vqa_type']
             
             if vqa_type in {'comp','presence','rural_urban'}:
-                pred_scores[vqa_type] += evaluate_f1(reference, response)
+                pred_scores[vqa_type] += evaluate(reference, response)
                 sample_count[vqa_type] += 1
                 
 

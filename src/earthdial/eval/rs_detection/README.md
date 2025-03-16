@@ -33,6 +33,7 @@ EarthDial/validation_data/
  ├── NWPU_VHR_10
  ├── Swimming_pool_dataset
  ├── urban_tree_crown_detection
+ ├── ship_dataset_v0
 ```
 
 ---
@@ -42,8 +43,11 @@ EarthDial/validation_data/
 To execute the evaluation process on an **8-GPU setup**, run the following command:
 
 ```shell
-# Test the rs_classification datasets
-GPUS=8 ./src/earthdial/eval/eval.sh rs_detection --dynamic
+# Test the RGB-Datasets: 'GeoChat,NWPU_VHR_10,Swimming_pool_dataset,urban_tree_crown_detection'
+GPUS=8 ./src/earthdial/eval/eval.sh ./checkpoints/EarthDial_4B_RGB rs_detection --dynamic
+
+# Test the SAR-Datasets: 'ship_dataset_v0'
+GPUS=8 ./src/earthdial/eval/eval.sh ./checkpoints/EarthDial_4B_MS rs_detection --dynamic
 ```
 
 This tests our EarthDial-4B on for object detection task, saves result files (e.g., `src/earthdial/eval/rs_detection/results/GeoChat.jsonl`) and displays the object detection scores.
