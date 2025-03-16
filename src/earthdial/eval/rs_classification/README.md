@@ -35,6 +35,9 @@ EarthDial/validation_data/
  ├── UCM
  ├── WHU_19 
  ├── BigEarthNet_FINAL_RGB
+ ├── BigEarthNet_S2
+ ├── STARCOP_test
+ ├── UHI_test
 ```
 
 ---
@@ -44,12 +47,17 @@ EarthDial/validation_data/
 To execute the evaluation process on an **8-GPU setup**, run the following command:
 
 ```shell
-# Test the rs_classification datasets
-GPUS=8 ./src/earthdial/eval/eval.sh rs_classification_RGB --dynamic
-GPUS=8 ./src/earthdial/eval/eval.sh rs_classification_MS
+# Test the RGB-Datasets: 'AID,UCM,WHU_19,BigEarthNet_FINAL_RGB'
+GPUS=8 ./src/earthdial/eval/eval.sh ./checkpoints/EarthDial_4B_RGB rs_classification --dynamic
+
+# Test the MS-Datasets: 'LCZs_S2,TreeSatAI,BigEarthNet_S2'
+GPUS=8 ./src/earthdial/eval/eval.sh ./checkpoints/EarthDial_4B_MS rs_classification --dynamic
+
+# Test the MS-Datasets: 'STARCOP_test,UHI_test'
+GPUS=8 ./src/earthdial/eval/eval.sh ./checkpoints/EarthDial_4B_Methane_UHI rs_classification --dynamic
 ```
 
-This tests our EarthDial-4B on for classification task, saves result files (e.g., `src/earthdial/eval/rs_classification/results/AID.jsonl`) and displays the classification accuracy.
+This tests our EarthDial-4B for classification task, saves result files (e.g., `src/earthdial/eval/rs_classification/results/AID.jsonl`) and displays the classification accuracy.
 
 ---
 

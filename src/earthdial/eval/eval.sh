@@ -2,8 +2,8 @@
 
 set -x
 
-#CHECKPOINT=${1}
-TASK=${1}
+CHECKPOINT=${1}
+TASK=${2}
 export PYTHONPATH="${PYTHONPATH}"
 #echo "CHECKPOINT: ${CHECKPOINT}"
 echo "CHECKPOINT: ${TASK}"
@@ -37,10 +37,9 @@ echo "GPUS: ${GPUS}"
 
 
 
-if [ "${TASK}" = "rs_classification_RGB" ]; then
+if [ "${TASK}" = "rs_classification" ]; then
     
-    DATASETS='AID,UCM,WHU_19,BigEarthNet_RGB'
-    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
+    DATASETS='STARCOP_test,UHI_test'
 
     torchrun \
     --nnodes=1 \
@@ -196,7 +195,7 @@ if [ "${TASK}" = "rs_change_detection" ]; then
     --master_addr=127.0.0.1 \
     --nproc_per_node=${GPUS} \
     --master_port=${MASTER_PORT} \
-    src/earthdial/eval/rs_change_detection/rs_change_detection_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir /share/data/drive_2/remote_sensing/EarthDial/src/earthdial/eval/rs_change_detection/results "${ARGS[@]:2}"
+    src/earthdial/eval/rs_change_detection/rs_change_detection_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_change_detection/results "${ARGS[@]:2}"
 
     clear && python src/earthdial/eval/rs_change_detection/eval_detection.py --datasets ${DATASETS}
     #python src/earthdial/eval/rs_change_detection/eval_detection.py --datasets ${DATASETS}
@@ -205,6 +204,19 @@ if [ "${TASK}" = "rs_change_detection" ]; then
 fi
 
 
+if [ "${TASK}" = "rs_methane_plume" ]; then
+
+    DATASETS='rs_UHI'
+    CHECKPOINT='./checkpoints/EarthDial_4B_Methane_UHI'
+
+    torchrun \
+    --nnodes=1 \
+    --node_rank=0 \
+    --master_addr=127.0.0.1 \
+    --nproc_per_node=${GPUS} \
+    --master_port=${MASTER_PORT} \
+    /share/data/drive_2/remote_sensing/EarthDial/src/earthdial/eval/rs_methane_plume/classification_shards_MS_UHI.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_methane_plume/results "${ARGS[@]:2}"
+fi
 
 
 
@@ -246,15 +258,7 @@ fi
 
 
 
-if [ "${DATASET}" = "methane_plume" ]; then
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    /share/data/drive_2/remote_sensing/InternVL/GeoVLM_Git/src/geovlm/eval/rs_classification/classification_shards_Methan.py --checkpoint ${CHECKPOINT} --out-dir /share/data/drive_2/remote_sensing/InternVL/internvl_chat/eval/rs_methane/4B_Full_9Nov_pretrain_VIT_MLP_LLM_1_RGBFinetune_Change_MS_UHI_Methane "${ARGS[@]:2}"
-fi
+
 
 if [ "${DATASET}" = "quakeset_shards" ]; then
     torchrun \

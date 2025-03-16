@@ -27,7 +27,7 @@ def evaluate_f1(reference, candidate):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--datasets', type=str, default='UCM')
+    parser.add_argument('--datasets', type=str, default='UHI_test')
     args = parser.parse_args()
 
     args.datasets = args.datasets.split(',')

@@ -20,6 +20,7 @@ import numpy as np
 import warnings
 import torch.distributed as dist
 from itertools import islice
+import cv2
 
 warnings.filterwarnings("once")
 
@@ -69,7 +70,23 @@ ds_collections = {
         'max_new_tokens': 500,
         'bands':12,
         'normalization':'s2_l2a',
-        'pooling': 'average'
+        'po,oling': 'average'
+    },
+    'STARCOP_test': {
+        'shard_path': './validation_data/STARCOP_shards/STARCOP_shards/STARCOP_test_yes_or_no',
+        'max_new_tokens': 10,
+        'bands':4,
+        "image_key": "tif_pl,mag1c",
+        'normalization':'rgbm_norm',
+        'pooling': 'bilinear'
+    },
+    'UHI_test': {
+        'shard_path': './validation_data/UHI_shards/UHI_temperature_landuse_test',
+        'max_new_tokens': 50,
+        'bands':8,
+        'normalization':'l8_norm',
+        'pooling': 'bilinear'
+
     }
     
 }
@@ -107,6 +124,20 @@ class ClassificationDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.test)
 
+    def convert_ms_bands(self, band_images):
+        band_images = np.array(band_images, dtype=np.float32)
+
+        if band_images.ndim < 3 or band_images.size == 0:
+            raise ValueError("Invalid input: Bands must have at least 3 dimensions and be non-empty.")
+
+        resized_bands = [
+            cv2.resize(band, (self.input_size, self.input_size), interpolation=cv2.INTER_LINEAR)
+            if band.shape[:2] != (self.input_size, self.input_size) else band
+            for band in band_images
+        ]
+
+        return torch.tensor(np.stack(resized_bands, axis=0), dtype=torch.float32)
+
     def __getitem__(self, idx):
 
         data = self.test[idx]
@@ -114,10 +145,16 @@ class ClassificationDataset(torch.utils.data.Dataset):
         annotation = data['groundtruth']
 
 
-        if self.ds_name in {'rs_LCZ_test', 'BigEarthNet_S2'}:
+        if self.ds_name in {'rs_LCZ_test', 'BigEarthNet_S2', 'UHI_test'}:
             image = data['tif_ms']
         elif self.ds_name == 'TreeSatAI':
             image = data['rgbi']
+        elif self.ds_name == 'STARCOP_test':
+            image_keys = ["tif_pl", "mag1c"]  # List of image keys
+            image_objects = [np.array(data[key]) for key in image_keys]
+            image_objects[0] = np.transpose(image_objects[0], (2, 0, 1))
+            image_objects[1] = np.expand_dims(image_objects[1], axis=0) if image_objects[1].ndim == 2 else image_objects[1]
+            image = np.concatenate(image_objects, axis=0)
         else:
             image = data['jpg'].convert('RGB')
       
@@ -129,9 +166,12 @@ class ClassificationDataset(torch.utils.data.Dataset):
                     if self.dynamic_image_size else [image])
             pixel_values = torch.stack([self.transform(img) for img in images])
         else:
+            if self.ds_name == 'UHI_test':
+                image = self.convert_ms_bands(image)
             pixel_values = torch.tensor(np.array(image), dtype=torch.float32).unsqueeze(0)
             pixel_values = torch.stack([self.transform(pixel_value) for pixel_value in pixel_values])
             pixel_values = self.model.sequential_vit_features(pixel_values, self.pooling)
+
 
         return {
             'question': question,
