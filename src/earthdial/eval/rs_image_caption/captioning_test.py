@@ -24,23 +24,23 @@ from datasets import load_from_disk
 
 ds_collections = {
     'NWPU_RESISC45_Captions': {
-        'shard_path': './validation_data/Image_captioning/NWPU_RESISC45_Captions/NWPU_RESISC45_Captions_test',
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Image_captioning/NWPU_RESISC45_Captions/NWPU_RESISC45_Captions_test',
         'max_new_tokens': 100,
     },
     'RSICD_Captions': {
-        'shard_path': './validation_data/Image_captioning/RSICD_Captions/RSICD_Captions_test',
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Image_captioning/RSICD_Captions/RSICD_Captions_test',
         'max_new_tokens': 100,
     },
     'RSITMD_Captions': {
-        'shard_path': './validation_data/Image_captioning/RSITMD_Captions/RSITMD_Captions_test',
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Image_captioning/RSITMD_Captions/RSITMD_Captions_test',
         'max_new_tokens': 100,
     },
     'sydney_Captions': {
-        'shard_path': './validation_data/Image_captioning/sydney_Captions/sydney_Captions_test',
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Image_captioning/sydney_Captions/sydney_Captions_test',
         'max_new_tokens': 100,
     },
     'UCM_captions': {
-        'shard_path': './validation_data/Image_captioning/UCM_Captions/UCM_Captions_test',
+        'shard_path': '/share/data/drive_2/remote_sensing/validation_data/Image_captioning/UCM_Captions/UCM_Captions_test',
         'max_new_tokens': 100,
     } 
     

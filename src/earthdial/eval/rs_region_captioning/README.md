@@ -47,7 +47,7 @@ To execute the evaluation process on an **8-GPU setup**, run the following comma
 
 ```shell
 # Test the rs_image_caption datasets
-GPUS=8 ./src/earthdial/eval/eval.sh rs_region_captioning --dynamic
+GPUS=8 ./src/earthdial/eval/eval.sh ./checkpoints/EarthDial_4B_RGB rs_region_captioning --dynamic
 ```
 
 This tests our EarthDial-4B on for region captioning task, saves result files (e.g., `src/earthdial/eval/rs_region_captioning/results/GeoChat.jsonl`) and displays the region captioning score.

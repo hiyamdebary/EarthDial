@@ -182,8 +182,8 @@ def evaluate_chat_model():
         )
 
         outputs = []
-        for pixel_values, questions, annotations, task_types, size_groups in islice(tqdm(dataloader), 5):
-        #for pixel_values, questions, annotations, task_types, size_groups in enumerate(tqdm(dataloader)):
+        #for pixel_values, questions, annotations, task_types, size_groups in islice(tqdm(dataloader), 5):
+        for pixel_values, questions, annotations, task_types, size_groups in tqdm(dataloader):
             pixel_values = pixel_values.to(torch.bfloat16).cuda()
             generation_config = dict(
                 num_beams=args.num_beams,

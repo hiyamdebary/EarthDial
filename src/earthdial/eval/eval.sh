@@ -67,66 +67,10 @@ if [ "${TASK}" = "rs_detection" ]; then
     python src/earthdial/eval/rs_detection/eval.py --datasets ${DATASETS}
 fi
 
-# if [ "${TASK}" = "rs_classification_MS" ]; then
-    
-#     DATASETS='rs_LCZ_test,TreeSatAI,BigEarthNet_S2'
-#     CHECKPOINT='./checkpoints/EarthDial_4B_MS'
-
-#     torchrun \
-#     --nnodes=1 \
-#     --node_rank=0 \
-#     --master_addr=127.0.0.1 \
-#     --nproc_per_node=${GPUS} \
-#     --master_port=${MASTER_PORT} \
-#     src/earthdial/eval/rs_classification/classification_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_classification/results "${ARGS[@]:2}"
-
-#     clear && python src/earthdial/eval/rs_classification/eval.py --datasets ${DATASETS}
-# fi
-
-
-
-if [ "${TASK}" = "rs_image_caption" ]; then
-    
-    DATASETS='NWPU_RESISC45_Captions,RSICD_Captions,RSITMD_Captions,sydney_Captions,UCM_captions'
-    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
-
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    src/earthdial/eval/rs_image_caption/captioning_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_image_caption/results "${ARGS[@]:2}"
-
-    clear && python src/earthdial/eval/rs_image_caption/eval.py --datasets ${DATASETS}
-fi
-
-
-
-
-
-if [ "${TASK}" = "rs_detection_MS" ]; then
-    
-    DATASETS='ship_dataset_v0'
-    CHECKPOINT='./checkpoints/EarthDial_8B_MS'
-
-    torchrun \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=127.0.0.1 \
-    --nproc_per_node=${GPUS} \
-    --master_port=${MASTER_PORT} \
-    src/earthdial/eval/rs_detection/detection_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_detection/results "${ARGS[@]:2}"
-
-    clear && python src/earthdial/eval/rs_detection/eval.py --datasets ${DATASETS}
-fi
-
-
 
 if [ "${TASK}" = "rs_region_captioning" ]; then
     
     DATASETS='GeoChat,HIT_UAV_test,NWPU_VHR_10_test,ship_dataset_v0_test,SRSDD_V1_0_test,Swimming_pool_dataset_test,UCAS_AOD,urban_tree_crown_detection'
-    CHECKPOINT='./checkpoints/EarthDial_4B_RGB'
 
     torchrun \
     --nnodes=1 \
@@ -136,8 +80,32 @@ if [ "${TASK}" = "rs_region_captioning" ]; then
     --master_port=${MASTER_PORT} \
     src/earthdial/eval/rs_region_captioning/captioning_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_region_captioning/results "${ARGS[@]:2}"
 
-    clear && python src/earthdial/eval/rs_region_captioning/eval.py --datasets ${DATASETS}
+    python src/earthdial/eval/rs_region_captioning/eval.py --datasets ${DATASETS}
 fi
+
+
+
+if [ "${TASK}" = "rs_image_caption" ]; then
+    
+    DATASETS='NWPU_RESISC45_Captions,RSICD_Captions,RSITMD_Captions,sydney_Captions,UCM_captions'
+
+    torchrun \
+    --nnodes=1 \
+    --node_rank=0 \
+    --master_addr=127.0.0.1 \
+    --nproc_per_node=${GPUS} \
+    --master_port=${MASTER_PORT} \
+    src/earthdial/eval/rs_image_caption/captioning_test.py --checkpoint ${CHECKPOINT} --datasets ${DATASETS} --out-dir src/earthdial/eval/rs_image_caption/results "${ARGS[@]:2}"
+
+    python src/earthdial/eval/rs_image_caption/eval.py --datasets ${DATASETS}
+fi
+
+
+
+
+
+
+
 
 
 if [ "${TASK}" = "rs_grounding_description" ]; then
