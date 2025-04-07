@@ -3,7 +3,7 @@
     <img src="https://i.imgur.com/waxVImv.png" alt="Oryx EarthDial-ChatGPT">
 </p>
 
-#### [Sagar Soni]()\*, [Akshay Dudhane]()\*, [Hiyam Debary]()\*, [Mustansar Fiaz]()\*, [Muhammad Akhtar Munir](), [Muhammad Sohail Danisho](), [Paolo Fraccaro](), [Campbell  Watson](), [Levente Klein]() [Salman Khan]() and [Fahad Khan]()
+#### [Sagar Soni]()\*, [Akshay Dudhane]()\*, [Hiyam Debary]()\*, [Mustansar Fiaz]()\*, [Muhammad Akhtar Munir](), [Muhammad Sohail Danisho](), [Paolo Fraccaro](), [Campbell  Watson](), [Levente J. Klein](), [Salman Khan]() and [Fahad Khan]()
 \* Equally contributing first authors
 
 #### **IBM Research Lab, Mohamed bin Zayed University of AI**
