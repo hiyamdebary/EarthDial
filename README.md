@@ -9,8 +9,8 @@
 #### **IBM Research Lab, Mohamed bin Zayed University of AI**
 
 [![paper](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/2412.15190)
-[![hf_checkpoint_RGB](https://img.shields.io/badge/🤗-Checkpoints-9C276A.svg)](https://huggingface.co/akshaydudhane/EarthDial_4B_RGB) <br>
-[![Downstream_Datasets](https://img.shields.io/badge/🤗-Paper%20In%20HF-red.svg)](https://huggingface.co/datasets/akshaydudhane/EarthDial-Dataset)
+[![hf_dataset](https://img.shields.io/badge/🤗-Dataset-blue.svg)](https://huggingface.co/datasets/akshaydudhane/EarthDial-Dataset)
+[![hf_model](https://img.shields.io/badge/🤗-Model-blue.svg)](https://huggingface.co/akshaydudhane/EarthDial_4B_RGB)
 
 ---
 
