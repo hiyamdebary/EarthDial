@@ -122,7 +122,8 @@ Please refer to demo folder for the more information about Earthdial demo.
   <img src="images/Model_Demo.png" alt="EarthDial Architectural">
 </p>
 
----
+</p>
+<!--
 
 ## 🤖 Qualitative results of EarthDial
 
