@@ -181,6 +181,7 @@ Qualitative examples for region-based captioning. Given a bounding box, EarthDia
 
 ## 📜 Citation
 
+```bibtex
 @article{soni2025earthdial,
   title={EarthDial: Turning Multi-sensory Earth Observations to Interactive Dialogues}, 
   author={Sagar Soni, Akshay Dudhane, Hiyam Debary, Mustansar Fiaz, Muhammad Akhtar Munir, Muhammad Sohail Danisho, Paolo Fraccaro, Campbell Watson, Levente J. Klein, Salman Khan, Fahad Khan},
