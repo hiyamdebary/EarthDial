@@ -67,7 +67,6 @@ pip install -e .
 Please check out our [Model]() for all public EarthDial checkpoints, and check demo section for instructions on how to run the earthdial demo.
 
 ## Train 
-(Asll the checkpoints will be available  soon)
 ### Stage 1 : RS Conversational Pretraining
 ### Stage 2 : RS RGB and Temporal finetuning
 ### Stage 3 : RS Multispectral and SAR Finetuning:
