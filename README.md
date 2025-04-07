@@ -188,7 +188,8 @@ Qualitative examples for region-based captioning. Given a bounding box, EarthDia
   journal={ArXiv},
   year={2025},
   url={https://arxiv.org/abs/2412.15190}
-} -->
+}
+```
 
 ---
 
