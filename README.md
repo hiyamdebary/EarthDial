@@ -9,6 +9,7 @@
 #### **IBM Research Lab, Mohamed bin Zayed University of AI**
 
 [![paper](https://img.shields.io/badge/arXiv-Paper-<COLOR>.svg)](https://arxiv.org/abs/2412.15190)
+[![hf_checkpoint-RGB](https://img.shields.io/badge/🤗-Checkpoints-9C276A.svg)](https://huggingface.co/akshaydudhane/EarthDial_4B_RGB) <br>
 
 
 ---
