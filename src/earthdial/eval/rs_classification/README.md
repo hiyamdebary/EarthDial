@@ -5,30 +5,70 @@ This repository provides a streamlined **evaluation pipeline** for the **Image C
 
 ---
 
-## 📂 Data Preparation
+
+## 📥 Download EarthDial Classification Dataset
+
+The **EarthDial-Dataset** is hosted on the [Hugging Face Hub](https://huggingface.co/datasets/akshaydudhane/EarthDial-Dataset). 
+Dataset structure look like
+
+```bash
+EarthDial_downstream_task_datasets/
+│
+├── Classification/
+│   ├── AID/
+│   │   └── test/data-00000-of-00001.arrow
+│   └── ...
+│
+├── Detection/
+│   ├── NWPU_VHR_10_test/
+│   ├── Swimming_pool_dataset_test/
+│   └── ...
+│
+├── Region_captioning/
+│   └── NWPU_VHR_10_test_region_captioning/
+│
+├── Image_captioning/
+│   ├── RSICD_Captions/
+│   └── UCM_Captions/
+│...
+```
+
+You can download it using the `huggingface_hub` Python package.
+
+
+### Requirements
+
+Install the required package:
+
+```shell
+pip install huggingface_hub
+```
+
+### Download Instructions
 
 Before downloading the datasets, ensure that the following directory structure exists:
 
 ```shell
-mkdir -p src/earthdial/eval/data/rs_classification
+mkdir -p src/earthdial/eval/Eardial_downstream_task_datasets
 ```
+Use the following Python script to download only the `Classification` subfolder:
 
-### 📸 Image Classification Datasets
-Follow these steps to prepare the datasets:
+```python
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="akshaydudhane/EarthDial-Dataset",
+    repo_type="dataset",
+    allow_patterns="Eardial_downstream_task_datasets/Classification/**",
+    local_dir=""
+)
+````
+
+### Output
+The dataset will be saved in a local directory named Eardial_downstream_task_datasets/Classification, preserving the internal folder structure. After preparation, the expected directory structure will be:
 
 ```shell
-# Step 1: Navigate to the data directory
-cd EarthDial/validation_data
-
-# Step 2: Download dataset shard files
-
-
-```
-
-After preparation, the expected directory structure will be:
-
-```shell
-EarthDial/validation_data/
+EarthDial/Eardial_downstream_task_datasets/Classification
  ├── AID
  ├── LCZs_S2
  ├── TreeSatAI
@@ -39,6 +79,12 @@ EarthDial/validation_data/
  ├── STARCOP_test
  ├── UHI_test
 ```
+
+
+
+Notes
+This dataset is intended for evaluation only and does not include predefined train/val/test splits. All files are in .arrow format and can be read using libraries like datasets or pyarrow.
+
 
 ---
 
