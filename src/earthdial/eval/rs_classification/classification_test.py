@@ -28,52 +28,52 @@ warnings.filterwarnings("once")
 
 ds_collections = {
     'AID': {
-        'shard_path': './validation_data/Classification/AID',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/AID',
         'max_new_tokens': 10,
         'normalization': 'imagenet',
         'pooling': None
     },
     'UCM': {
-        'shard_path': './validation_data/Classification/UCM',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/UCM',
         'max_new_tokens': 10,
         'normalization': 'imagenet',
         'pooling': None
     },
     'WHU_19': {
-        'shard_path': './validation_data/Classification/WHU_19',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/WHU_19',
         'max_new_tokens': 10,
         'normalization': 'imagenet',
         'pooling': None
     },
     'BigEarthNet_RGB': {
-        'shard_path': './validation_data/Classification/BigEarthNet_RGB/BigEarthNet_test',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/BigEarthNet_RGB/BigEarthNet_test',
         'max_new_tokens': 500,
         'normalization': 'imagenet',
         'pooling': None
     },  
     'rs_LCZ_test': {
-        'shard_path': './validation_data/Classification/LCZs_S2/LCZs_S2_test',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/LCZs_S2/LCZs_S2_test',
         'max_new_tokens': 10,
         'bands':10,
         'normalization':'s2_norm',
         'pooling': 'bilinear'
     },
     'TreeSatAI': {
-        'shard_path': './validation_data/Classification/TreeSatAI/TreeSatAI_test',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/TreeSatAI/TreeSatAI_test',
         'max_new_tokens': 10,
         'bands':4,
         'normalization':'tree_norm',
         'pooling': 'bilinear'
     },
     'BigEarthNet_S2': {
-        'shard_path': './validation_data/Classification/BigEarthNet_S2/BigEarthNet_S2_Test',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/BigEarthNet_S2/BigEarthNet_S2_Test',
         'max_new_tokens': 500,
         'bands':12,
         'normalization':'s2_l2a',
         'po,oling': 'average'
     },
     'STARCOP_test': {
-        'shard_path': './validation_data/STARCOP_shards/STARCOP_shards/STARCOP_test_yes_or_no',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/STARCOP_shards/STARCOP_shards/STARCOP_test_yes_or_no',
         'max_new_tokens': 10,
         'bands':4,
         "image_key": "tif_pl,mag1c",
@@ -81,7 +81,7 @@ ds_collections = {
         'pooling': 'bilinear'
     },
     'UHI_test': {
-        'shard_path': './validation_data/UHI_shards/UHI_temperature_landuse_test',
+        'shard_path': './src/earthdial/eval/Eardial_downstream_task_datasets/Classification/UHI_shards/UHI_temperature_landuse_test',
         'max_new_tokens': 50,
         'bands':8,
         'normalization':'l8_norm',
