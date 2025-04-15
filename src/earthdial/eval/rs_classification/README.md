@@ -80,12 +80,32 @@ EarthDial/Eardial_downstream_task_datasets/Classification
  ├── UHI_test
 ```
 
-
-
 Notes
 This dataset is intended for evaluation only and does not include predefined train/val/test splits. All files are in .arrow format and can be read using libraries like datasets or pyarrow.
 
 
+## 📦 Download EarthDial Model Checkpoints
+
+The EarthDial models are available on the Hugging Face Hub.
+
+[EarthDial_4B_RGB](https://huggingface.co/akshaydudhane/EarthDial_4B_RGB)
+
+[EarthDial_4B_MS](https://huggingface.co/akshaydudhane/EarthDial_4B_MS)
+
+[EarthDial_4B_Methane_UHI](https://huggingface.co/akshaydudhane/EarthDial_4B_Methane_UHI)
+
+### 🧩 Download Instructions
+
+You can download them using the `huggingface_hub` Python package.
+```python
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="akshaydudhane/EarthDial_4B_RGB",
+    repo_type="model",
+    local_dir="checkpoints/EarthDial_4B_RGB"
+)
+```
 ---
 
 ## 🚀 Running the Evaluation
