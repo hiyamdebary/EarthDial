@@ -64,7 +64,29 @@ pip install -e .
 ```
 
 ## EarthDial Weights and Demo
-Please check out our [Model]() for all public EarthDial checkpoints, and check demo section for instructions on how to run the earthdial demo.
+
+The EarthDial models are available on the Hugging Face Hub.
+
+[EarthDial_4B_RGB](https://huggingface.co/akshaydudhane/EarthDial_4B_RGB)
+
+[EarthDial_4B_MS](https://huggingface.co/akshaydudhane/EarthDial_4B_MS)
+
+[EarthDial_4B_Methane_UHI](https://huggingface.co/akshaydudhane/EarthDial_4B_Methane_UHI)
+
+### 🧩 Download Instructions
+
+You can download them using the `huggingface_hub` Python package.
+```python
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="akshaydudhane/EarthDial_4B_RGB",
+    repo_type="model",
+    local_dir="checkpoints/EarthDial_4B_RGB"
+)
+```
+---
+Please check out our Model for all public EarthDial checkpoints, and check demo section for instructions on how to run the earthdial demo.
 
 ## Train 
 ### Stage 1 : RS Conversational Pretraining
