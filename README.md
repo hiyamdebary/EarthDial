@@ -89,8 +89,26 @@ snapshot_download(
 Please check out our Model for all public EarthDial checkpoints, and check demo section for instructions on how to run the earthdial demo.
 
 ## Train 
-Download training data from Huggingface [repo](https://huggingface.co/datasets/akshaydudhane/EarthDial-Dataset/tree/main/training_set)
 
+### Download Training Data
+Before downloading the datasets, ensure that the following directory structure exists:
+
+```shell
+mkdir -p src/earthdial/trainset
+```
+Download training data from Huggingface [repo](https://huggingface.co/datasets/akshaydudhane/EarthDial-Dataset/tree/main/training_set)
+Use the following Python script to download the training set:
+
+```python
+from huggingface_hub import snapshot_download
+
+snapshot_download(
+    repo_id="akshaydudhane/EarthDial-Dataset",
+    repo_type="dataset",
+    allow_patterns="training_set/**",
+    local_dir=""
+)
+````
 ### Stage 1 : RS Conversational Pretraining
 ### Stage 2 : RS RGB and Temporal finetuning
 ### Stage 3 : RS Multispectral and SAR Finetuning:
