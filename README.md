@@ -125,7 +125,7 @@ Both hyperparameters used in pretraining and finetuning are provided below.
 
 ## Evaluation
 
-We evaluate EarthDial on a diverse set of 37 benchmarks. To ensure the reproducibility, we evaluate the models with greedy decoding. We do not evaluate using beam search to make the inference process consistent with the chat demo of real-time outputs.
+We evaluate EarthDial on a diverse set of 44 benchmarks. To ensure the reproducibility, we evaluate the models with greedy decoding. We do not evaluate using beam search to make the inference process consistent with the chat demo of real-time outputs.
 Evaluation script will updated soon.
 ## 🏆 Contributions
 
